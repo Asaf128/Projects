@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Analytics } from '@vercel/analytics/react'
+import { SpeedInsights } from '@vercel/speed-insights/react'
 import Login from './components/Login'
 import Dashboard from './components/Dashboard'
 import Toast from './components/Toast'
@@ -100,6 +101,7 @@ function App() {
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
       {showImpressum && <Impressum onClose={() => setShowImpressum(false)} />}
       <Analytics />
+      <SpeedInsights />
     </div>
   )
 }

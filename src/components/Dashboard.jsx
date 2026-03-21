@@ -466,9 +466,19 @@ function Dashboard({ onLogout, showToast, projectName, onBack }) {
               </svg>
             </button>
           )}
-          <h1 className="text-lg text-[var(--vintage-charcoal)]" style={{ fontFamily: 'Georgia, serif' }}>
-            {projectName || 'PC Manager'}
-          </h1>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={onBack}
+              className="text-lg text-[var(--vintage-gray)] hover:text-[var(--vintage-brown)] transition-colors"
+              style={{ fontFamily: 'Georgia, serif' }}
+            >
+              Projects
+            </button>
+            <span className="text-lg text-[var(--vintage-gray)]">/</span>
+            <h1 className="text-lg text-[var(--vintage-charcoal)]" style={{ fontFamily: 'Georgia, serif' }}>
+              {projectName || 'PC Manager'}
+            </h1>
+          </div>
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -519,9 +529,19 @@ function Dashboard({ onLogout, showToast, projectName, onBack }) {
       {/* Desktop Sidebar */}
       <aside className="hidden lg:flex w-56 bg-[var(--vintage-beige)] border-r border-[var(--vintage-border)] flex-col">
         <div className="p-6 border-b border-[var(--vintage-border)]">
-          <h1 className="text-lg text-[var(--vintage-charcoal)] tracking-wide" style={{ fontFamily: 'Georgia, serif' }}>
-            PC Manager
-          </h1>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={onBack}
+              className="text-lg text-[var(--vintage-gray)] hover:text-[var(--vintage-brown)] transition-colors"
+              style={{ fontFamily: 'Georgia, serif' }}
+            >
+              Projects
+            </button>
+            <span className="text-lg text-[var(--vintage-gray)]">/</span>
+            <h1 className="text-lg text-[var(--vintage-charcoal)] tracking-wide" style={{ fontFamily: 'Georgia, serif' }}>
+              {projectName || 'PC Manager'}
+            </h1>
+          </div>
         </div>
         <nav className="flex-1 p-4 space-y-1">
           {navItems.map(item => (

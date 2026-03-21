@@ -83,8 +83,9 @@ CREATE TRIGGER update_parts_updated_at BEFORE UPDATE ON parts
 CREATE TRIGGER update_pcs_updated_at BEFORE UPDATE ON pcs
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
--- 9. Ihren Benutzer einfügen (Passwort wird beim ersten Login gehasht)
--- Das Passwort "Daschka" wird clientseitig gehasht und dann eingefügt
+-- 9. Ihren Benutzer einfügen (Passwort wird über Supabase Auth verwaltet)
+-- Der Benutzer wird über die Supabase Auth API erstellt
+-- Dieser Eintrag ist nur für die Referenz
 INSERT INTO app_users (email, password_hash) 
-VALUES ('ceb.asaf@gmail.com', 'temp_hash_will_be_updated')
+VALUES ('ceb.asaf@gmail.com', 'managed_by_supabase_auth')
 ON CONFLICT (email) DO NOTHING;

@@ -40,9 +40,8 @@ Klicken Sie auf **"Deploy"**
 
 ## Schritt 3: Login-Daten
 
-Nach dem Deployment können Sie sich anmelden mit:
-- E-Mail: ceb.asaf@gmail.com
-- Passwort: Daschka
+Nach dem Deployment können Sie sich anmelden mit Ihrer konfigurierten E-Mail-Adresse.
+Das Passwort wird beim ersten Login über die Supabase Auth API gesetzt.
 
 ## WICHTIG: Sicherheitshinweise
 

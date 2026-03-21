@@ -1,0 +1,85 @@
+@import "tailwindcss";
+
+/* Vintage Design Tokens */
+:root {
+  --vintage-cream: #faf8f5;
+  --vintage-beige: #f5f0e8;
+  --vintage-brown: #8b7355;
+  --vintage-brown-light: #a89279;
+  --vintage-brown-dark: #6b5642;
+  --vintage-olive: #6b7c5e;
+  --vintage-olive-light: #8a9d7a;
+  --vintage-gold: #c9a962;
+  --vintage-gold-light: #dbc48a;
+  --vintage-charcoal: #3d3d3d;
+  --vintage-gray: #7a7a7a;
+  --vintage-border: #d4cfc5;
+  --vintage-shadow: rgba(139, 115, 85, 0.1);
+}
+
+body {
+  margin: 0;
+  font-family: 'Georgia', 'Times New Roman', serif;
+  background-color: var(--vintage-cream);
+  color: var(--vintage-charcoal);
+  min-height: 100vh;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+/* Smooth transitions for theme switching */
+* {
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--vintage-beige);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--vintage-border);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--vintage-brown);
+}
+
+/* Focus styles */
+input:focus,
+select:focus,
+button:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--vintage-brown);
+}
+
+/* Table hover effect */
+tbody tr:hover {
+  background-color: var(--vintage-beige);
+}
+
+/* Modal backdrop blur */
+.fixed.inset-0 {
+  backdrop-filter: blur(4px);
+}
+
+/* Print styles */
+@media print {
+  .fixed,
+  aside,
+  button {
+    display: none !important;
+  }
+  
+  main {
+    padding: 0 !important;
+  }
+}

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 
-function Dashboard({ onLogout, showToast }) {
+function Dashboard({ onLogout, showToast, projectName, onBack }) {
   const [activeTab, setActiveTab] = useState('overview');
   const [parts, setParts] = useState([]);
   const [pcs, setPcs] = useState([]);
@@ -454,9 +454,22 @@ function Dashboard({ onLogout, showToast }) {
     <div className="min-h-screen flex bg-[var(--vintage-cream)]">
       {/* Mobile Header */}
       <div className="lg:hidden fixed top-0 left-0 right-0 bg-[var(--vintage-beige)] border-b border-[var(--vintage-border)] z-40 px-4 py-3 flex items-center justify-between">
-        <h1 className="text-lg text-[var(--vintage-charcoal)]" style={{ fontFamily: 'Georgia, serif' }}>
-          PC Manager
-        </h1>
+        <div className="flex items-center gap-3">
+          {onBack && (
+            <button
+              onClick={onBack}
+              className="p-1 text-[var(--vintage-gray)] hover:text-[var(--vintage-brown)]"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="19" y1="12" x2="5" y2="12"></line>
+                <polyline points="12 19 5 12 12 5"></polyline>
+              </svg>
+            </button>
+          )}
+          <h1 className="text-lg text-[var(--vintage-charcoal)]" style={{ fontFamily: 'Georgia, serif' }}>
+            {projectName || 'PC Manager'}
+          </h1>
+        </div>
         <div className="flex items-center gap-2">
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}

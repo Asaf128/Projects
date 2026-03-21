@@ -6,6 +6,7 @@ import Impressum from './components/Impressum'
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [activeProject, setActiveProject] = useState(null)
   const [toast, setToast] = useState(null)
   const [showImpressum, setShowImpressum] = useState(false)
 
@@ -24,6 +25,7 @@ function App() {
   const handleLogout = () => {
     sessionStorage.removeItem('isLoggedIn')
     setIsLoggedIn(false)
+    setActiveProject(null)
   }
 
   const showToast = (message, type = 'success') => {
@@ -31,13 +33,56 @@ function App() {
     setTimeout(() => setToast(null), 3000)
   }
 
+  const projects = [
+    { id: 'kleinanzeigen-pcs', name: 'Kleinanzeigen-PCs', description: 'PC-Teile und Builds verwalten' },
+    { id: 'tik-toks', name: 'Tik-Toks', description: 'TikTok Content verwalten' }
+  ]
+
   return (
     <div>
       {isLoggedIn ? (
-        <Dashboard 
-          onLogout={handleLogout} 
-          showToast={showToast}
-        />
+        activeProject ? (
+          <Dashboard 
+            onLogout={handleLogout} 
+            showToast={showToast}
+            projectName={projects.find(p => p.id === activeProject)?.name}
+            onBack={() => setActiveProject(null)}
+          />
+        ) : (
+          <div className="min-h-screen bg-[var(--vintage-cream)]">
+            <header className="bg-white border-b border-[var(--vintage-border)] px-6 py-4">
+              <div className="flex items-center justify-between">
+                <h1 className="text-xl text-[var(--vintage-charcoal)]" style={{ fontFamily: 'Georgia, serif' }}>
+                  Projects
+                </h1>
+                <button
+                  onClick={handleLogout}
+                  className="text-sm text-[var(--vintage-gray)] hover:text-[var(--vintage-brown)] transition-colors"
+                >
+                  Abmelden
+                </button>
+              </div>
+            </header>
+            <main className="p-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {projects.map(project => (
+                  <button
+                    key={project.id}
+                    onClick={() => setActiveProject(project.id)}
+                    className="bg-white border border-[var(--vintage-border)] rounded-lg p-6 text-left hover:border-[var(--vintage-brown)] hover:shadow-md transition-all"
+                  >
+                    <h2 className="text-lg text-[var(--vintage-charcoal)] mb-2" style={{ fontFamily: 'Georgia, serif' }}>
+                      {project.name}
+                    </h2>
+                    <p className="text-sm text-[var(--vintage-gray)]">
+                      {project.description}
+                    </p>
+                  </button>
+                ))}
+              </div>
+            </main>
+          </div>
+        )
       ) : (
         <div className="min-h-screen flex flex-col">
           <Login onLogin={handleLogin} showToast={showToast} />

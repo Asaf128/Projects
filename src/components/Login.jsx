@@ -42,15 +42,6 @@ function Login({ onLogin, showToast }) {
     <div className="min-h-screen flex items-center justify-center bg-[var(--vintage-cream)] px-4">
       <div className="w-full max-w-sm">
         <div className="bg-white dark:bg-[var(--vintage-dark-blue)] border border-[var(--vintage-border)] dark:border-[var(--vintage-dark-blue-light)] rounded-lg shadow-sm p-8">
-          <div className="text-center mb-8">
-            <h1 className="text-2xl font-normal text-[var(--vintage-charcoal)] tracking-wide mb-2" style={{ fontFamily: 'Georgia, serif' }}>
-              PC Manager
-            </h1>
-            <p className="text-sm text-[var(--vintage-gray)]">
-              Inventarverwaltung
-            </p>
-          </div>
-          
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
               <label 
@@ -112,10 +103,6 @@ function Login({ onLogin, showToast }) {
             </button>
           </form>
         </div>
-        
-        <p className="text-center text-xs text-[var(--vintage-gray)] mt-6">
-          © 2026 PC Manager
-        </p>
       </div>
     </div>
   );

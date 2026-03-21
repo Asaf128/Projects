@@ -466,16 +466,16 @@ function Dashboard({ onLogout, showToast, projectName, onBack }) {
               </svg>
             </button>
           )}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 min-w-0">
             <button
               onClick={onBack}
-              className="text-lg text-[var(--vintage-gray)] hover:text-[var(--vintage-brown)] transition-colors"
+              className="text-lg text-[var(--vintage-gray)] hover:text-black transition-colors flex-shrink-0"
               style={{ fontFamily: 'Georgia, serif' }}
             >
               Projects
             </button>
-            <span className="text-lg text-[var(--vintage-gray)]">/</span>
-            <h1 className="text-lg text-[var(--vintage-charcoal)]" style={{ fontFamily: 'Georgia, serif' }}>
+            <span className="text-lg text-[var(--vintage-gray)] flex-shrink-0">/</span>
+            <h1 className="text-lg text-[var(--vintage-charcoal)] truncate" style={{ fontFamily: 'Georgia, serif' }}>
               {projectName || 'PC Manager'}
             </h1>
           </div>
@@ -529,16 +529,16 @@ function Dashboard({ onLogout, showToast, projectName, onBack }) {
       {/* Desktop Sidebar */}
       <aside className="hidden lg:flex w-56 bg-[var(--vintage-beige)] border-r border-[var(--vintage-border)] flex-col">
         <div className="p-6 border-b border-[var(--vintage-border)]">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 min-w-0">
             <button
               onClick={onBack}
-              className="text-lg text-[var(--vintage-gray)] hover:text-[var(--vintage-brown)] transition-colors"
+              className="text-lg text-[var(--vintage-gray)] hover:text-black transition-colors flex-shrink-0"
               style={{ fontFamily: 'Georgia, serif' }}
             >
               Projects
             </button>
-            <span className="text-lg text-[var(--vintage-gray)]">/</span>
-            <h1 className="text-lg text-[var(--vintage-charcoal)] tracking-wide" style={{ fontFamily: 'Georgia, serif' }}>
+            <span className="text-lg text-[var(--vintage-gray)] flex-shrink-0">/</span>
+            <h1 className="text-lg text-[var(--vintage-charcoal)] tracking-wide truncate" style={{ fontFamily: 'Georgia, serif' }}>
               {projectName || 'PC Manager'}
             </h1>
           </div>

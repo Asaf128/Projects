@@ -130,10 +130,11 @@ function KanbanBoard({ onLogout, showToast, projectName, onBack }) {
   };
 
   const resetForm = () => {
+    const todoStatus = statuses.find(s => s.name === 'To Do');
     setNewTask({
       title: '',
       description: '',
-      status_id: statuses.length > 0 ? statuses[0].id : null,
+      status_id: todoStatus ? todoStatus.id : (statuses.length > 0 ? statuses[0].id : null),
       assigned_to: '',
       priority: 'medium',
       due_date: ''
@@ -287,13 +288,12 @@ function KanbanBoard({ onLogout, showToast, projectName, onBack }) {
         </div>
         <div className="flex items-center gap-2">
           <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="p-2 text-[var(--vintage-gray)] hover:text-[var(--vintage-brown)]"
+            onClick={() => setShowAddTask(true)}
+            className="p-2 text-[var(--vintage-brown)] hover:text-[var(--vintage-brown-dark)]"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="3" y1="12" x2="21" y2="12"></line>
-              <line x1="3" y1="6" x2="21" y2="6"></line>
-              <line x1="3" y1="18" x2="21" y2="18"></line>
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
             </svg>
           </button>
         </div>
@@ -304,16 +304,6 @@ function KanbanBoard({ onLogout, showToast, projectName, onBack }) {
         <div className="lg:hidden fixed inset-0 bg-black/50 z-40" onClick={() => setMobileMenuOpen(false)}>
           <aside className="w-64 h-full bg-[var(--vintage-beige)] border-r border-[var(--vintage-border)] p-4" onClick={e => e.stopPropagation()}>
             <nav className="space-y-2 mt-12">
-              <button
-                onClick={() => { setShowAddTask(true); setMobileMenuOpen(false); }}
-                className="w-full text-left px-4 py-3 text-sm rounded transition-colors flex items-center gap-3 bg-[var(--vintage-brown)] text-white"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="12" y1="5" x2="12" y2="19"></line>
-                  <line x1="5" y1="12" x2="19" y2="12"></line>
-                </svg>
-                <span>Neuer Task</span>
-              </button>
             </nav>
             <div className="mt-8 pt-4 border-t border-[var(--vintage-border)]">
               <button
@@ -367,17 +357,6 @@ function KanbanBoard({ onLogout, showToast, projectName, onBack }) {
             </button>
           </div>
           <nav className="flex-1 p-4 space-y-1">
-            <button
-              onClick={() => setShowAddTask(true)}
-              className={`w-full text-left px-4 py-2.5 text-sm rounded transition-colors flex items-center gap-3 bg-[var(--vintage-brown)] text-white ${sidebarCollapsed ? 'justify-center' : ''}`}
-              style={{ fontFamily: 'Georgia, serif' }}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="12" y1="5" x2="12" y2="19"></line>
-                <line x1="5" y1="12" x2="19" y2="12"></line>
-              </svg>
-              {!sidebarCollapsed && <span>Neuer Task</span>}
-            </button>
           </nav>
           <div className="p-4 border-t border-[var(--vintage-border)]">
             <button

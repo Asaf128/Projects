@@ -1,14 +1,12 @@
 import { useState } from 'react'
 import { supabase } from './supabase'
-import translations from './translations'
 
-export default function Login({ onLogin, language = 'de' }) {
+export default function Login({ onLogin }) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [isSignUp, setIsSignUp] = useState(false)
-  const t = translations[language];
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -49,7 +47,7 @@ export default function Login({ onLogin, language = 'de' }) {
             <polyline points="12,6 12,12 16,14"/>
           </svg>
           <h1 style={styles.title}>TimeStamp</h1>
-          <p style={styles.subtitle}>{t.timeTracker.title}</p>
+          <p style={styles.subtitle}>Zeiterfassung leicht gemacht</p>
         </div>
 
         <form onSubmit={handleSubmit} style={styles.form}>
@@ -60,7 +58,7 @@ export default function Login({ onLogin, language = 'de' }) {
           )}
 
           <div style={styles.inputGroup}>
-            <label style={styles.label}>{t.login.email}</label>
+            <label style={styles.label}>E-Mail</label>
             <input
               type="email"
               value={email}
@@ -72,7 +70,7 @@ export default function Login({ onLogin, language = 'de' }) {
           </div>
 
           <div style={styles.inputGroup}>
-            <label style={styles.label}>{t.login.password}</label>
+            <label style={styles.label}>Passwort</label>
             <input
               type="password"
               value={password}
@@ -91,7 +89,7 @@ export default function Login({ onLogin, language = 'de' }) {
             }}
             disabled={loading}
           >
-            {loading ? t.login.loading : (isSignUp ? t.login.submit : t.login.submit)}
+            {loading ? 'Wird geladen...' : (isSignUp ? 'Registrieren' : 'Anmelden')}
           </button>
 
           <button
@@ -99,7 +97,7 @@ export default function Login({ onLogin, language = 'de' }) {
             onClick={() => setIsSignUp(!isSignUp)}
             style={styles.switchButton}
           >
-            {isSignUp ? t.login.submit : t.login.submit}
+            {isSignUp ? 'Bereits registriert? Anmelden' : 'Kein Konto? Registrieren'}
           </button>
         </form>
       </div>

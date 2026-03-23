@@ -7,15 +7,12 @@ import KanbanBoard from './components/KanbanBoard'
 import TimeTracker from './components/TimeTracker'
 import Toast from './components/Toast'
 import Impressum from './components/Impressum'
-import LanguageSwitcher from './components/LanguageSwitcher'
-import translations from './lib/translations'
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [activeProject, setActiveProject] = useState(null)
   const [toast, setToast] = useState(null)
   const [showImpressum, setShowImpressum] = useState(false)
-  const [language, setLanguage] = useState('de')
 
   useEffect(() => {
     const loggedIn = sessionStorage.getItem('isLoggedIn')
@@ -40,12 +37,10 @@ function App() {
     setTimeout(() => setToast(null), 3000)
   }
 
-  const t = translations[language];
-  
   const projects = [
-    { id: 'kleinanzeigen-pcs', name: t.projects.kleinanzeigen.name, description: t.projects.kleinanzeigen.description },
-    { id: 'to-dos', name: t.projects.todos.name, description: t.projects.todos.description },
-    { id: 'timestamp', name: t.projects.timestamp.name, description: t.projects.timestamp.description }
+    { id: 'kleinanzeigen-pcs', name: 'Kleinanzeigen-PCs', description: 'PC-Teile und Builds verwalten' },
+    { id: 'to-dos', name: 'To-Do\'s', description: 'Kanban Board für Task-Management' },
+    { id: 'timestamp', name: 'TimeStamp', description: 'Arbeitszeit erfassen und verwalten' }
   ]
 
   return (
@@ -79,20 +74,14 @@ function App() {
             <header className="bg-white border-b border-[var(--vintage-border)] px-6 py-4">
               <div className="flex items-center justify-between">
                 <h1 className="text-xl text-[var(--vintage-charcoal)]" style={{ fontFamily: 'Georgia, serif' }}>
-                  {t.projects.title}
+                  Projects
                 </h1>
-                <div className="flex items-center gap-4">
-                  <LanguageSwitcher 
-                    currentLanguage={language} 
-                    onLanguageChange={setLanguage} 
-                  />
-                  <button
-                    onClick={handleLogout}
-                    className="text-sm text-[var(--vintage-gray)] hover:text-[var(--vintage-brown)] transition-colors"
-                  >
-                    {t.nav.logout}
-                  </button>
-                </div>
+                <button
+                  onClick={handleLogout}
+                  className="text-sm text-[var(--vintage-gray)] hover:text-[var(--vintage-brown)] transition-colors"
+                >
+                  Abmelden
+                </button>
               </div>
             </header>
             <main className="p-6">
@@ -117,13 +106,13 @@ function App() {
         )
       ) : (
         <div className="min-h-screen flex flex-col">
-          <Login onLogin={handleLogin} showToast={showToast} language={language} />
+          <Login onLogin={handleLogin} showToast={showToast} />
           <footer className="mt-auto py-4 text-center">
             <button
               onClick={() => setShowImpressum(true)}
               className="text-xs text-[var(--vintage-gray)] hover:text-[var(--vintage-brown)] transition-colors underline"
             >
-              {t.general.impressum}
+              Impressum
             </button>
           </footer>
         </div>

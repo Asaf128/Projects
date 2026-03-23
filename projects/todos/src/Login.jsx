@@ -1,13 +1,11 @@
 import { useState } from 'react';
 import { supabase } from '../lib/supabase';
-import translations from './translations';
 
-function Login({ onLogin, showToast, language = 'de' }) {
+function Login({ onLogin, showToast }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const t = translations[language];
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -28,13 +26,13 @@ function Login({ onLogin, showToast, language = 'de' }) {
       // Login erfolgreich
       sessionStorage.setItem('isLoggedIn', 'true');
       sessionStorage.setItem('userEmail', username);
-      showToast(t.login.success, 'success');
+      showToast('Erfolgreich angemeldet!', 'success');
       await new Promise(resolve => setTimeout(resolve, 500));
       onLogin();
     } catch (err) {
       console.error('Login error:', err);
-      setError(t.login.error);
-      showToast(t.login.failed, 'error');
+      setError('Ungültige E-Mail oder Passwort');
+      showToast('Anmeldung fehlgeschlagen', 'error');
     } finally {
       setIsLoading(false);
     }
@@ -51,7 +49,7 @@ function Login({ onLogin, showToast, language = 'de' }) {
                 className="block text-xs uppercase tracking-wider text-[var(--vintage-brown)] mb-2"
                 style={{ fontFamily: 'Georgia, serif' }}
               >
-                {t.login.email}
+                E-Mail
               </label>
               <input
                 type="email"
@@ -69,7 +67,7 @@ function Login({ onLogin, showToast, language = 'de' }) {
                 className="block text-xs uppercase tracking-wider text-[var(--vintage-brown)] mb-2"
                 style={{ fontFamily: 'Georgia, serif' }}
               >
-                {t.login.password}
+                Passwort
               </label>
               <input
                 type="password"
@@ -97,10 +95,10 @@ function Login({ onLogin, showToast, language = 'de' }) {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
-                  {t.login.loading}
+                  Anmeldung...
                 </span>
               ) : (
-                t.login.submit
+                'Anmelden'
               )}
             </button>
           </form>

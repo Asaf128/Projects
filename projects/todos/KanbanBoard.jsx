@@ -24,7 +24,7 @@ function KanbanBoard({ onLogout, showToast, projectName, onBack }) {
     due_date: ''
   });
 
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
 
   useEffect(() => {
     loadData();

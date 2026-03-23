@@ -105,11 +105,10 @@ CREATE TABLE IF NOT EXISTS task_statuses (
 
 -- Standard-Status einfügen
 INSERT INTO task_statuses (name, display_order, color) VALUES
-  ('Backlog', 1, '#6b7280'),
-  ('To Do', 2, '#3b82f6'),
-  ('In Progress', 3, '#f59e0b'),
-  ('Review', 4, '#8b5cf6'),
-  ('Done', 5, '#10b981')
+  ('To Do', 1, '#3b82f6'),
+  ('In Progress', 2, '#f59e0b'),
+  ('Review', 3, '#8b5cf6'),
+  ('Done', 4, '#10b981')
 ON CONFLICT (name) DO NOTHING;
 
 -- 11. Tabelle für Tasks

@@ -20,7 +20,18 @@ BEGIN
   END IF;
 END $$;
 
--- 3. Aktualisiere die Sales-Tabelle um item_name zu haben (falls noch nicht vorhanden)
+-- 3. Füge profit Spalte zur clothes Tabelle hinzu (falls noch nicht vorhanden)
+DO $$ 
+BEGIN
+  IF NOT EXISTS (
+    SELECT FROM information_schema.columns 
+    WHERE table_name = 'clothes' AND column_name = 'profit'
+  ) THEN
+    ALTER TABLE clothes ADD COLUMN profit DECIMAL(10,2) GENERATED ALWAYS AS (selling_price - purchase_price) STORED;
+  END IF;
+END $$;
+
+-- 4. Aktualisiere die Sales-Tabelle um item_name zu haben (falls noch nicht vorhanden)
 DO $$ 
 BEGIN
   IF NOT EXISTS (
@@ -31,7 +42,7 @@ BEGIN
   END IF;
 END $$;
 
--- 4. Aktualisiere die Sales-Tabelle um purchase_price zu haben (falls noch nicht vorhanden)
+-- 5. Aktualisiere die Sales-Tabelle um purchase_price zu haben (falls noch nicht vorhanden)
 DO $$ 
 BEGIN
   IF NOT EXISTS (
@@ -42,7 +53,7 @@ BEGIN
   END IF;
 END $$;
 
--- 5. Aktualisiere die Sales-Tabelle um profit zu haben (falls noch nicht vorhanden)
+-- 6. Aktualisiere die Sales-Tabelle um profit zu haben (falls noch nicht vorhanden)
 DO $$ 
 BEGIN
   IF NOT EXISTS (
@@ -53,25 +64,28 @@ BEGIN
   END IF;
 END $$;
 
--- 6. RLS für brands Tabelle aktivieren
+-- 7. RLS für brands Tabelle aktivieren
 ALTER TABLE brands ENABLE ROW LEVEL SECURITY;
 
--- 7. Policy für brands Tabelle erstellen
+-- 8. Policy für brands Tabelle erstellen
 DROP POLICY IF EXISTS "Allow authenticated users" ON brands;
 CREATE POLICY "Allow authenticated users" ON brands
   FOR ALL
   USING (auth.uid() IS NOT NULL)
   WITH CHECK (auth.uid() IS NOT NULL);
 
--- 8. Trigger für updated_at auf clothes Tabelle
+-- 9. Trigger für updated_at auf clothes Tabelle
 DROP TRIGGER IF EXISTS update_clothes_updated_at ON clothes;
 CREATE TRIGGER update_clothes_updated_at 
   BEFORE UPDATE ON clothes
   FOR EACH ROW 
   EXECUTE FUNCTION update_updated_at_column();
 
--- 9. View für Investment-Übersicht erstellen (optional, für spätere Reports)
-CREATE OR REPLACE VIEW vinted_investment_overview AS
+-- 10. View für Investment-Übersicht erstellen (mit security_invoker = true)
+DROP VIEW IF EXISTS vinted_investment_overview;
+CREATE OR REPLACE VIEW vinted_investment_overview
+WITH (security_invoker = true)
+AS
 SELECT 
   COUNT(*) as total_items,
   COUNT(CASE WHEN status = 'verfügbar' THEN 1 END) as available_items,
@@ -81,8 +95,11 @@ SELECT
   COALESCE(SUM(CASE WHEN status = 'verkauft' THEN profit ELSE 0 END), 0) as total_profit
 FROM clothes;
 
--- 10. View für Kategorie-Statistiken erstellen
-CREATE OR REPLACE VIEW vinted_category_stats AS
+-- 11. View für Kategorie-Statistiken erstellen (mit security_invoker = true)
+DROP VIEW IF EXISTS vinted_category_stats;
+CREATE OR REPLACE VIEW vinted_category_stats
+WITH (security_invoker = true)
+AS
 SELECT 
   c.id as category_id,
   c.name as category_name,
@@ -94,8 +111,11 @@ FROM categories c
 LEFT JOIN clothes cl ON c.id = cl.category_id
 GROUP BY c.id, c.name;
 
--- 11. View für Marken-Statistiken erstellen
-CREATE OR REPLACE VIEW vinted_brand_stats AS
+-- 12. View für Marken-Statistiken erstellen (mit security_invoker = true)
+DROP VIEW IF EXISTS vinted_brand_stats;
+CREATE OR REPLACE VIEW vinted_brand_stats
+WITH (security_invoker = true)
+AS
 SELECT 
   b.id as brand_id,
   b.name as brand_name,
@@ -105,11 +125,6 @@ SELECT
 FROM brands b
 LEFT JOIN clothes cl ON b.id = cl.brand_id
 GROUP BY b.id, b.name;
-
--- 12. RLS für Views aktivieren (falls gewünscht)
--- ALTER VIEW vinted_investment_overview OWNER TO authenticated;
--- ALTER VIEW vinted_category_stats OWNER TO authenticated;
--- ALTER VIEW vinted_brand_stats OWNER TO authenticated;
 
 -- Hinweis: Die Investment-Berechnung erfolgt in der Anwendung wie folgt:
 -- totalInvestment = SUM(purchase_price) WHERE status = 'verfügbar'

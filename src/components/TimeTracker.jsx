@@ -9,7 +9,7 @@ function TimeTracker({ onLogout, showToast, projectName, onBack }) {
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [activeTab, setActiveTab] = useState('timer');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
   const [stats, setStats] = useState({
     today: 0,
     week: 0,

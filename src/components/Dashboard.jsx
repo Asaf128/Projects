@@ -16,7 +16,7 @@ function Dashboard({ onLogout, showToast, projectName, onBack }) {
   const [sortOrder, setSortOrder] = useState('asc');
   const [filterType, setFilterType] = useState('all');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [newPart, setNewPart] = useState({
     type: 'cpu',

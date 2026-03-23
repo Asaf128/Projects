@@ -16,10 +16,6 @@ Dieses Repository enthält zwei Hauptprojekte, die über eine gemeinsame Dashboa
 - **Funktionen:** Drag & Drop Kanban-Board für Aufgabenverwaltung
 - **Komponenten:** `KanbanBoard.jsx`
 
-### 3. Vinted Klamotten
-- **Beschreibung:** Kleidungsverkäufe auf Vinted verwalten
-- **Funktionen:** Inventarverwaltung für Kleidung, Preiskalkulation, Gewinnübersicht
-- **Komponenten:** `Dashboard.jsx`
 
 ## 🚀 Starten
 
@@ -36,13 +32,6 @@ npm run build
 
 ## 📁 Struktur
 
-```
-projects/
-├── kleinanzeigen-pcs/     # PC-Teile und Builds verwalten
-├── todos/                 # Kanban Board für Task-Management
-├── vinted-klamotten/      # Kleidungsverkäufe auf Vinted verwalten
-├── timestamp/             # Zeiterfassung
-└── zukuenftige-projekte/  # Zukünftige Projekte
 
 src/
 ├── components/

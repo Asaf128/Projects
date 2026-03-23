@@ -1,12 +1,14 @@
 import { useState } from 'react'
 import { supabase } from './supabase'
+import translations from './translations'
 
-export default function Login({ onLogin }) {
+export default function Login({ onLogin, language = 'de' }) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [isSignUp, setIsSignUp] = useState(false)
+  const t = translations[language];
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -47,7 +49,7 @@ export default function Login({ onLogin }) {
             <polyline points="12,6 12,12 16,14"/>
           </svg>
           <h1 style={styles.title}>TimeStamp</h1>
-          <p style={styles.subtitle}>Zeiterfassung leicht gemacht</p>
+          <p style={styles.subtitle}>{t.timeTracker.title}</p>
         </div>
 
         <form onSubmit={handleSubmit} style={styles.form}>
@@ -58,7 +60,7 @@ export default function Login({ onLogin }) {
           )}
 
           <div style={styles.inputGroup}>
-            <label style={styles.label}>E-Mail</label>
+            <label style={styles.label}>{t.login.email}</label>
             <input
               type="email"
               value={email}
@@ -70,7 +72,7 @@ export default function Login({ onLogin }) {
           </div>
 
           <div style={styles.inputGroup}>
-            <label style={styles.label}>Passwort</label>
+            <label style={styles.label}>{t.login.password}</label>
             <input
               type="password"
               value={password}
@@ -89,7 +91,7 @@ export default function Login({ onLogin }) {
             }}
             disabled={loading}
           >
-            {loading ? 'Wird geladen...' : (isSignUp ? 'Registrieren' : 'Anmelden')}
+            {loading ? t.login.loading : (isSignUp ? t.login.submit : t.login.submit)}
           </button>
 
           <button
@@ -97,7 +99,7 @@ export default function Login({ onLogin }) {
             onClick={() => setIsSignUp(!isSignUp)}
             style={styles.switchButton}
           >
-            {isSignUp ? 'Bereits registriert? Anmelden' : 'Kein Konto? Registrieren'}
+            {isSignUp ? t.login.submit : t.login.submit}
           </button>
         </form>
       </div>

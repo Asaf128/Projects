@@ -1,16 +1,71 @@
-# React + Vite
+# Projects Collection
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Eine Sammlung von React-Projekten mit einer einheitlichen Benutzeroberfläche.
 
-Currently, two official plugins are available:
+## 🏗️ Projektstruktur
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+Dieses Repository enthält zwei Hauptprojekte, die über eine gemeinsame Dashboard-Oberfläche zugänglich sind:
 
-## React Compiler
+### 1. Kleinanzeigen-PCs
+- **Beschreibung:** PC-Teile und Builds verwalten
+- **Funktionen:** Dashboard für die Verwaltung von PC-Komponenten
+- **Komponenten:** `Dashboard.jsx`
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### 2. To-Do's  
+- **Beschreibung:** Kanban Board für Task-Management
+- **Funktionen:** Drag & Drop Kanban-Board für Aufgabenverwaltung
+- **Komponenten:** `KanbanBoard.jsx`
 
-## Expanding the ESLint configuration
+## 🚀 Starten
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+```bash
+# Installieren der Abhängigkeiten
+npm install
+
+# Entwicklungsserver starten
+npm run dev
+
+# Produktion build
+npm run build
+```
+
+## 📁 Struktur
+
+```
+src/
+├── components/
+│   ├── Dashboard.jsx      # Kleinanzeigen-PCs Projekt
+│   ├── KanbanBoard.jsx    # To-Do's Projekt  
+│   ├── Login.jsx          # Anmeldekomponente
+│   ├── Toast.jsx          # Benachrichtigungen
+│   └── Impressum.jsx      # Impressum
+├── lib/
+│   └── supabase.js        # Datenbank-Konfiguration
+└── App.jsx                # Hauptkomponente mit Navigation
+```
+
+## 🔐 Anmeldung
+
+Die Anwendung erfordert eine Anmeldung. Nach dem Login können Sie zwischen den Projekten wechseln.
+
+## 🎨 Design
+
+- **Stil:** Vintage/Retro Design
+- **Farbschema:** Creme, Braun, Grau
+- **Typografie:** Georgia Serif
+
+## 🛠️ Technologien
+
+- React 18
+- Vite
+- Supabase (Backend)
+- Tailwind CSS
+- Vercel Analytics & Speed Insights
+
+## 📦 Deployment
+
+Automatisches Deployment über Vercel bei Push zu `main`.
+
+---
+
+*Erstellt mit ❤️ für eine saubere Projektorganisation*

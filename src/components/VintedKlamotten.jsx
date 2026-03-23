@@ -50,10 +50,10 @@ function VintedKlamotten({ onLogout, showToast, projectName, onBack }) {
       if (clothesError) throw clothesError
       setClothes(clothesData || [])
 
-      // Verkaufshistorie laden
+      // Verkaufshistorie laden (separate vinted_sales Tabelle)
       const { data: salesData, error: salesError } = await supabase
-        .from('sales')
-        .select('*')
+        .from('vinted_sales')
+        .select('*, categories(name), brands(name), sizes(name)')
         .order('sold_at', { ascending: false })
 
       if (salesError) throw salesError
@@ -189,14 +189,18 @@ function VintedKlamotten({ onLogout, showToast, projectName, onBack }) {
 
       if (updateError) throw updateError
 
-      // Verkauf in sales-Tabelle einfügen
+      // Verkauf in vinted_sales-Tabelle einfügen
       const { error: saleError } = await supabase
-        .from('sales')
+        .from('vinted_sales')
         .insert([{
           item_name: item.name,
           selling_price: sellingPrice,
           purchase_price: item.purchase_price,
-          profit: sellingPrice - item.purchase_price
+          profit: sellingPrice - item.purchase_price,
+          category_id: item.category_id,
+          brand_id: item.brand_id,
+          size_id: item.size_id,
+          condition: item.condition
         }])
 
       if (saleError) throw saleError

@@ -62,20 +62,41 @@ ALTER TABLE sales ENABLE ROW LEVEL SECURITY;
 ALTER TABLE app_users ENABLE ROW LEVEL SECURITY;
 
 -- 7. Policies erstellen (nur authentifizierte Benutzer haben Zugriff)
-CREATE POLICY "Allow authenticated users" ON parts FOR ALL USING (true);
-CREATE POLICY "Allow authenticated users" ON pcs FOR ALL USING (true);
-CREATE POLICY "Allow authenticated users" ON pc_parts FOR ALL USING (true);
-CREATE POLICY "Allow authenticated users" ON sales FOR ALL USING (true);
-CREATE POLICY "Allow authenticated users" ON app_users FOR SELECT USING (true);
+CREATE POLICY "Allow authenticated users" ON parts
+  FOR ALL
+  USING (auth.uid() IS NOT NULL)
+  WITH CHECK (auth.uid() IS NOT NULL);
+
+CREATE POLICY "Allow authenticated users" ON pcs
+  FOR ALL
+  USING (auth.uid() IS NOT NULL)
+  WITH CHECK (auth.uid() IS NOT NULL);
+
+CREATE POLICY "Allow authenticated users" ON pc_parts
+  FOR ALL
+  USING (auth.uid() IS NOT NULL)
+  WITH CHECK (auth.uid() IS NOT NULL);
+
+CREATE POLICY "Allow authenticated users" ON sales
+  FOR ALL
+  USING (auth.uid() IS NOT NULL)
+  WITH CHECK (auth.uid() IS NOT NULL);
+
+CREATE POLICY "Allow authenticated select" ON app_users
+  FOR SELECT
+  USING (auth.uid() IS NOT NULL);
 
 -- 8. Trigger für updated_at
 CREATE OR REPLACE FUNCTION update_updated_at_column()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER 
+LANGUAGE plpgsql
+SET search_path = ''
+AS $$
 BEGIN
     NEW.updated_at = NOW();
     RETURN NEW;
 END;
-$$ language 'plpgsql';
+$$;
 
 CREATE TRIGGER update_parts_updated_at BEFORE UPDATE ON parts
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
@@ -130,12 +151,15 @@ CREATE SEQUENCE IF NOT EXISTS task_number_seq START 1;
 
 -- 13. Funktion zum Generieren der Task-Nummer
 CREATE OR REPLACE FUNCTION generate_task_number()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER 
+LANGUAGE plpgsql
+SET search_path = ''
+AS $$
 BEGIN
-  NEW.task_number := 'TNR-' || nextval('task_number_seq');
+  NEW.task_number := 'TNR-' || nextval('public.task_number_seq');
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$;
 
 -- 14. Trigger für automatische Task-Nummer
 DROP TRIGGER IF EXISTS set_task_number ON tasks;
@@ -153,5 +177,12 @@ ALTER TABLE task_statuses ENABLE ROW LEVEL SECURITY;
 ALTER TABLE tasks ENABLE ROW LEVEL SECURITY;
 
 -- 17. Policies für Task-Tabellen
-CREATE POLICY "Allow authenticated users" ON task_statuses FOR ALL USING (true);
-CREATE POLICY "Allow authenticated users" ON tasks FOR ALL USING (true);
+CREATE POLICY "Allow authenticated users" ON task_statuses
+  FOR ALL
+  USING (auth.uid() IS NOT NULL)
+  WITH CHECK (auth.uid() IS NOT NULL);
+
+CREATE POLICY "Allow authenticated users" ON tasks
+  FOR ALL
+  USING (auth.uid() IS NOT NULL)
+  WITH CHECK (auth.uid() IS NOT NULL);

@@ -128,9 +128,9 @@ function VintedKlamotten({ onLogout, showToast, projectName, onBack }) {
       await supabase
         .from('sales')
         .insert([{
-          item_name: item.name,
+          pc_name: item.name,
           selling_price: sellingPrice,
-          purchase_price: item.purchase_price,
+          total_cost: item.purchase_price,
           profit: sellingPrice - item.purchase_price
         }])
 

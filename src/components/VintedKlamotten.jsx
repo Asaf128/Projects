@@ -5,14 +5,17 @@ function VintedKlamotten({ onLogout, showToast, projectName, onBack }) {
   const [clothes, setClothes] = useState([])
   const [categories, setCategories] = useState([])
   const [sizes, setSizes] = useState([])
+  const [brands, setBrands] = useState([])
   const [loading, setLoading] = useState(true)
   const [showAddForm, setShowAddForm] = useState(false)
   const [filterCategory, setFilterCategory] = useState('all')
   const [filterSize, setFilterSize] = useState('all')
+  const [filterBrand, setFilterBrand] = useState('all')
   const [newItem, setNewItem] = useState({
     name: '',
     category_id: '',
     size_id: '',
+    brand_id: '',
     condition: 'neuwertig',
     purchase_price: '',
     selling_price: '',
@@ -25,13 +28,14 @@ function VintedKlamotten({ onLogout, showToast, projectName, onBack }) {
 
   const loadData = async () => {
     try {
-      // Kleidung laden mit Kategorie und Größe
+      // Kleidung laden mit Kategorie, Größe und Marke
       const { data: clothesData, error: clothesError } = await supabase
         .from('clothes')
         .select(`
           *,
           categories(name),
-          sizes(name)
+          sizes(name),
+          brands(name)
         `)
         .order('created_at', { ascending: false })
 
@@ -55,6 +59,15 @@ function VintedKlamotten({ onLogout, showToast, projectName, onBack }) {
 
       if (sizesError) throw sizesError
       setSizes(sizesData || [])
+
+      // Marken laden
+      const { data: brandsData, error: brandsError } = await supabase
+        .from('brands')
+        .select('*')
+        .order('name', { ascending: true })
+
+      if (brandsError) throw brandsError
+      setBrands(brandsData || [])
     } catch (error) {
       console.error('Error loading data:', error)
       showToast('Fehler beim Laden der Daten', 'error')
@@ -72,6 +85,7 @@ function VintedKlamotten({ onLogout, showToast, projectName, onBack }) {
           name: newItem.name,
           category_id: parseInt(newItem.category_id),
           size_id: parseInt(newItem.size_id),
+          brand_id: newItem.brand_id ? parseInt(newItem.brand_id) : null,
           condition: newItem.condition,
           purchase_price: parseFloat(newItem.purchase_price),
           selling_price: parseFloat(newItem.selling_price),
@@ -86,6 +100,7 @@ function VintedKlamotten({ onLogout, showToast, projectName, onBack }) {
         name: '',
         category_id: '',
         size_id: '',
+        brand_id: '',
         condition: 'neuwertig',
         purchase_price: '',
         selling_price: '',
@@ -146,7 +161,8 @@ function VintedKlamotten({ onLogout, showToast, projectName, onBack }) {
   const filteredClothes = clothes.filter(item => {
     const categoryMatch = filterCategory === 'all' || item.category_id === parseInt(filterCategory)
     const sizeMatch = filterSize === 'all' || item.size_id === parseInt(filterSize)
-    return categoryMatch && sizeMatch
+    const brandMatch = filterBrand === 'all' || item.brand_id === parseInt(filterBrand)
+    return categoryMatch && sizeMatch && brandMatch
   })
 
   const totalProfit = clothes
@@ -269,6 +285,19 @@ function VintedKlamotten({ onLogout, showToast, projectName, onBack }) {
                   </select>
                 </div>
                 <div>
+                  <label className="block text-xs uppercase tracking-wider text-[var(--vintage-brown)] mb-1">Marke</label>
+                  <select
+                    value={newItem.brand_id}
+                    onChange={(e) => setNewItem({...newItem, brand_id: e.target.value})}
+                    className="w-full px-3 py-2 bg-[var(--vintage-beige)] border border-[var(--vintage-border)] rounded text-sm"
+                  >
+                    <option value="">Wählen...</option>
+                    {brands.map(brand => (
+                      <option key={brand.id} value={brand.id}>{brand.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
                   <label className="block text-xs uppercase tracking-wider text-[var(--vintage-brown)] mb-1">Zustand</label>
                   <select
                     value={newItem.condition}
@@ -351,6 +380,19 @@ function VintedKlamotten({ onLogout, showToast, projectName, onBack }) {
               ))}
             </select>
           </div>
+          <div>
+            <label className="block text-xs uppercase tracking-wider text-[var(--vintage-brown)] mb-1">Marke filtern</label>
+            <select
+              value={filterBrand}
+              onChange={(e) => setFilterBrand(e.target.value)}
+              className="px-3 py-2 bg-white border border-[var(--vintage-border)] rounded text-sm"
+            >
+              <option value="all">Alle Marken</option>
+              {brands.map(brand => (
+                <option key={brand.id} value={brand.id}>{brand.name}</option>
+              ))}
+            </select>
+          </div>
         </div>
 
         {/* Clothes List */}
@@ -364,6 +406,7 @@ function VintedKlamotten({ onLogout, showToast, projectName, onBack }) {
                 <tr>
                   <th className="px-4 py-3 text-left text-xs uppercase tracking-wider text-[var(--vintage-brown)]">Name</th>
                   <th className="px-4 py-3 text-left text-xs uppercase tracking-wider text-[var(--vintage-brown)]">Kategorie</th>
+                  <th className="px-4 py-3 text-left text-xs uppercase tracking-wider text-[var(--vintage-brown)]">Marke</th>
                   <th className="px-4 py-3 text-left text-xs uppercase tracking-wider text-[var(--vintage-brown)]">Größe</th>
                   <th className="px-4 py-3 text-left text-xs uppercase tracking-wider text-[var(--vintage-brown)]">Zustand</th>
                   <th className="px-4 py-3 text-left text-xs uppercase tracking-wider text-[var(--vintage-brown)]">Einkauf</th>
@@ -378,6 +421,7 @@ function VintedKlamotten({ onLogout, showToast, projectName, onBack }) {
                   <tr key={item.id} className="hover:bg-[var(--vintage-beige)]/50">
                     <td className="px-4 py-3 text-sm text-[var(--vintage-charcoal)]">{item.name}</td>
                     <td className="px-4 py-3 text-sm text-[var(--vintage-gray)]">{item.categories?.name || '-'}</td>
+                    <td className="px-4 py-3 text-sm text-[var(--vintage-gray)]">{item.brands?.name || '-'}</td>
                     <td className="px-4 py-3 text-sm text-[var(--vintage-gray)]">{item.sizes?.name || '-'}</td>
                     <td className="px-4 py-3 text-sm text-[var(--vintage-gray)]">{item.condition}</td>
                     <td className="px-4 py-3 text-sm text-[var(--vintage-gray)]">€{item.purchase_price?.toFixed(2)}</td>

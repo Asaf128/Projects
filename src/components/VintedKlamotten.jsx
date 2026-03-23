@@ -152,6 +152,8 @@ function VintedKlamotten({ onLogout, showToast, projectName, onBack }) {
   const totalProfit = clothes
     .filter(item => item.status === 'verkauft')
     .reduce((sum, item) => sum + ((item.selling_price || 0) - (item.purchase_price || 0)), 0)
+  const totalInvestment = clothes
+    .reduce((sum, item) => sum + (item.purchase_price || 0), 0)
   const totalItems = clothes.length
   const availableItems = clothes.filter(item => item.status === 'verfügbar').length
 
@@ -193,22 +195,26 @@ function VintedKlamotten({ onLogout, showToast, projectName, onBack }) {
         </div>
       </header>
 
-      {/* Stats */}
-      <div className="p-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <div className="bg-white border border-[var(--vintage-border)] rounded-lg p-4">
-            <div className="text-sm text-[var(--vintage-gray)]">Gesamtgewinn</div>
-            <div className="text-2xl text-[var(--vintage-brown)]">€{totalProfit.toFixed(2)}</div>
+        {/* Stats */}
+        <div className="p-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <div className="bg-white border border-[var(--vintage-border)] rounded-lg p-4">
+              <div className="text-sm text-[var(--vintage-gray)]">Gesamtgewinn</div>
+              <div className="text-2xl text-[var(--vintage-brown)]">€{totalProfit.toFixed(2)}</div>
+            </div>
+            <div className="bg-white border border-[var(--vintage-border)] rounded-lg p-4">
+              <div className="text-sm text-[var(--vintage-gray)]">Investment</div>
+              <div className="text-2xl text-[var(--vintage-charcoal)]">€{totalInvestment.toFixed(2)}</div>
+            </div>
+            <div className="bg-white border border-[var(--vintage-border)] rounded-lg p-4">
+              <div className="text-sm text-[var(--vintage-gray)]">Gesamtanzahl</div>
+              <div className="text-2xl text-[var(--vintage-charcoal)]">{totalItems}</div>
+            </div>
+            <div className="bg-white border border-[var(--vintage-border)] rounded-lg p-4">
+              <div className="text-sm text-[var(--vintage-gray)]">Verfügbar</div>
+              <div className="text-2xl text-[var(--vintage-charcoal)]">{availableItems}</div>
+            </div>
           </div>
-          <div className="bg-white border border-[var(--vintage-border)] rounded-lg p-4">
-            <div className="text-sm text-[var(--vintage-gray)]">Gesamtanzahl</div>
-            <div className="text-2xl text-[var(--vintage-charcoal)]">{totalItems}</div>
-          </div>
-          <div className="bg-white border border-[var(--vintage-border)] rounded-lg p-4">
-            <div className="text-sm text-[var(--vintage-gray)]">Verfügbar</div>
-            <div className="text-2xl text-[var(--vintage-charcoal)]">{availableItems}</div>
-          </div>
-        </div>
 
         {/* Add Button */}
         <button

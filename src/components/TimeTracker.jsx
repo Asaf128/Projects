@@ -16,8 +16,7 @@ function TimeTracker({ onLogout, showToast, projectName, onBack }) {
     month: 0
   });
 
-  // User ID aus sessionStorage (bestehendes System)
-  const userId = sessionStorage.getItem('userId') || 'default-user';
+  // User ID - nicht verwendet, da RLS deaktiviert ist
 
   useEffect(() => {
     fetchTimeEntries();
@@ -33,7 +32,6 @@ function TimeTracker({ onLogout, showToast, projectName, onBack }) {
       const { data, error } = await supabase
         .from('time_entries')
         .select('*')
-        .eq('user_id', userId)
         .order('clock_in', { ascending: false });
 
       if (error) throw error;
@@ -51,8 +49,9 @@ function TimeTracker({ onLogout, showToast, projectName, onBack }) {
       const { data, error } = await supabase
         .from('time_entries')
         .select('*')
-        .eq('user_id', userId)
         .is('clock_out', null)
+        .order('clock_in', { ascending: false })
+        .limit(1)
         .single();
 
       if (data) {
@@ -106,7 +105,6 @@ function TimeTracker({ onLogout, showToast, projectName, onBack }) {
         .from('time_entries')
         .insert([
           {
-            user_id: userId,
             clock_in: new Date().toISOString(),
           }
         ])

@@ -16,6 +16,7 @@ function Dashboard({ onLogout, showToast, projectName, onBack }) {
   const [sortOrder, setSortOrder] = useState('asc');
   const [filterType, setFilterType] = useState('all');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [newPart, setNewPart] = useState({
     type: 'cpu',
@@ -527,21 +528,42 @@ function Dashboard({ onLogout, showToast, projectName, onBack }) {
       )}
 
       {/* Desktop Sidebar */}
-      <aside className="hidden lg:flex w-56 bg-[var(--vintage-beige)] border-r border-[var(--vintage-border)] flex-col">
-        <div className="p-6 border-b border-[var(--vintage-border)]">
-          <div className="flex items-center gap-2 min-w-0">
-            <button
-              onClick={onBack}
-              className="text-lg text-[var(--vintage-gray)] hover:text-black transition-colors flex-shrink-0"
-              style={{ fontFamily: 'Georgia, serif' }}
-            >
-              Projects
-            </button>
-            <span className="text-lg text-[var(--vintage-gray)] flex-shrink-0">/</span>
-            <h1 className="text-lg text-[var(--vintage-charcoal)] tracking-wide truncate" style={{ fontFamily: 'Georgia, serif' }}>
-              {projectName || 'PC Manager'}
-            </h1>
-          </div>
+      <aside className={`hidden lg:flex bg-[var(--vintage-beige)] border-r border-[var(--vintage-border)] flex-col transition-all duration-300 ${sidebarCollapsed ? 'w-16' : 'w-56'}`}>
+        <div className="p-4 border-b border-[var(--vintage-border)] flex items-center justify-between">
+          {!sidebarCollapsed && (
+            <div className="flex items-center gap-2 min-w-0">
+              <button
+                onClick={onBack}
+                className="text-lg text-[var(--vintage-gray)] hover:text-black transition-colors flex-shrink-0"
+                style={{ fontFamily: 'Georgia, serif' }}
+              >
+                Projects
+              </button>
+              <span className="text-lg text-[var(--vintage-gray)] flex-shrink-0">/</span>
+              <h1 className="text-lg text-[var(--vintage-charcoal)] tracking-wide truncate" style={{ fontFamily: 'Georgia, serif' }}>
+                {projectName || 'PC Manager'}
+              </h1>
+            </div>
+          )}
+          <button
+            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+            className="p-2 text-[var(--vintage-gray)] hover:text-[var(--vintage-brown)] transition-colors"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              {sidebarCollapsed ? (
+                <>
+                  <line x1="3" y1="12" x2="21" y2="12"></line>
+                  <line x1="3" y1="6" x2="21" y2="6"></line>
+                  <line x1="3" y1="18" x2="21" y2="18"></line>
+                </>
+              ) : (
+                <>
+                  <line x1="19" y1="12" x2="5" y2="12"></line>
+                  <polyline points="12 19 5 12 12 5"></polyline>
+                </>
+              )}
+            </svg>
+          </button>
         </div>
         <nav className="flex-1 p-4 space-y-1">
           {navItems.map(item => (
@@ -552,21 +574,27 @@ function Dashboard({ onLogout, showToast, projectName, onBack }) {
                 activeTab === item.id
                   ? 'bg-[var(--vintage-brown)] text-white'
                   : 'text-[var(--vintage-brown)] hover:bg-[var(--vintage-brown)]/10'
-              }`}
+              } ${sidebarCollapsed ? 'justify-center' : ''}`}
               style={{ fontFamily: 'Georgia, serif' }}
             >
               <span>{item.icon}</span>
-              <span>{item.label}</span>
+              {!sidebarCollapsed && <span>{item.label}</span>}
             </button>
           ))}
         </nav>
         <div className="p-4 border-t border-[var(--vintage-border)]">
           <button
             onClick={onLogout}
-            className="w-full px-4 py-2 text-sm text-[var(--vintage-gray)] hover:text-[var(--vintage-brown)] transition-colors"
+            className={`w-full px-4 py-2 text-sm text-[var(--vintage-gray)] hover:text-[var(--vintage-brown)] transition-colors ${sidebarCollapsed ? 'justify-center flex' : ''}`}
             style={{ fontFamily: 'Georgia, serif' }}
           >
-            Abmelden
+            {sidebarCollapsed ? (
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                <polyline points="16 17 21 12 16 7"></polyline>
+                <line x1="21" y1="12" x2="9" y2="12"></line>
+              </svg>
+            ) : 'Abmelden'}
           </button>
         </div>
       </aside>

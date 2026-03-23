@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase';
 function KanbanBoard({ onLogout, showToast, projectName, onBack }) {
   const [tasks, setTasks] = useState([]);
   const [statuses, setStatuses] = useState([]);
+  const [users, setUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showAddTask, setShowAddTask] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
@@ -13,6 +14,7 @@ function KanbanBoard({ onLogout, showToast, projectName, onBack }) {
   const [filterPriority, setFilterPriority] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showUserDropdown, setShowUserDropdown] = useState(false);
   const [newTask, setNewTask] = useState({
     title: '',
     description: '',
@@ -47,6 +49,15 @@ function KanbanBoard({ onLogout, showToast, projectName, onBack }) {
 
       if (taskError) throw taskError;
       setTasks(taskData || []);
+
+      // Benutzer laden
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('*')
+        .order('name', { ascending: true });
+
+      if (userError) throw userError;
+      setUsers(userData || []);
 
       // Default status_id setzen (To Do als Standard)
       if (statusData && statusData.length > 0 && !newTask.status_id) {
@@ -579,15 +590,46 @@ function KanbanBoard({ onLogout, showToast, projectName, onBack }) {
                   ))}
                 </select>
               </div>
-              <div>
+              <div className="relative">
                 <label className="block text-xs uppercase tracking-wider text-[var(--vintage-brown)] mb-1">Zugewiesen an</label>
                 <input
                   type="text"
                   value={newTask.assigned_to}
-                  onChange={(e) => setNewTask({...newTask, assigned_to: e.target.value})}
+                  onChange={(e) => {
+                    setNewTask({...newTask, assigned_to: e.target.value});
+                    setShowUserDropdown(true);
+                  }}
+                  onFocus={() => setShowUserDropdown(true)}
+                  onBlur={() => setTimeout(() => setShowUserDropdown(false), 200)}
                   className="w-full px-3 py-2 bg-[var(--vintage-beige)] border border-[var(--vintage-border)] rounded text-sm"
                   placeholder="Name"
                 />
+                {showUserDropdown && users.length > 0 && (
+                  <div className="absolute z-10 w-full mt-1 bg-white border border-[var(--vintage-border)] rounded shadow-lg max-h-40 overflow-y-auto">
+                    {users
+                      .filter(user => 
+                        user.name.toLowerCase().includes(newTask.assigned_to.toLowerCase())
+                      )
+                      .map(user => (
+                        <button
+                          key={user.id}
+                          type="button"
+                          onClick={() => {
+                            setNewTask({...newTask, assigned_to: user.name});
+                            setShowUserDropdown(false);
+                          }}
+                          className="w-full text-left px-3 py-2 text-sm hover:bg-[var(--vintage-beige)] transition-colors flex items-center gap-2"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="12" cy="7" r="4"></circle>
+                          </svg>
+                          {user.name}
+                        </button>
+                      ))
+                    }
+                  </div>
+                )}
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>

@@ -3,12 +3,16 @@ import { supabase } from '../lib/supabase'
 
 function VintedKlamotten({ onLogout, showToast, projectName, onBack }) {
   const [clothes, setClothes] = useState([])
+  const [categories, setCategories] = useState([])
+  const [sizes, setSizes] = useState([])
   const [loading, setLoading] = useState(true)
   const [showAddForm, setShowAddForm] = useState(false)
+  const [filterCategory, setFilterCategory] = useState('all')
+  const [filterSize, setFilterSize] = useState('all')
   const [newItem, setNewItem] = useState({
     name: '',
-    category: '',
-    size: '',
+    category_id: '',
+    size_id: '',
     condition: 'neuwertig',
     purchase_price: '',
     selling_price: '',
@@ -21,14 +25,36 @@ function VintedKlamotten({ onLogout, showToast, projectName, onBack }) {
 
   const loadData = async () => {
     try {
-      // Kleidung laden
+      // Kleidung laden mit Kategorie und Größe
       const { data: clothesData, error: clothesError } = await supabase
         .from('clothes')
-        .select('*')
+        .select(`
+          *,
+          categories(name),
+          sizes(name)
+        `)
         .order('created_at', { ascending: false })
 
       if (clothesError) throw clothesError
       setClothes(clothesData || [])
+
+      // Kategorien laden
+      const { data: categoriesData, error: categoriesError } = await supabase
+        .from('categories')
+        .select('*')
+        .order('name', { ascending: true })
+
+      if (categoriesError) throw categoriesError
+      setCategories(categoriesData || [])
+
+      // Größen laden
+      const { data: sizesData, error: sizesError } = await supabase
+        .from('sizes')
+        .select('*')
+        .order('name', { ascending: true })
+
+      if (sizesError) throw sizesError
+      setSizes(sizesData || [])
     } catch (error) {
       console.error('Error loading data:', error)
       showToast('Fehler beim Laden der Daten', 'error')
@@ -43,9 +69,13 @@ function VintedKlamotten({ onLogout, showToast, projectName, onBack }) {
       const { error } = await supabase
         .from('clothes')
         .insert([{
-          ...newItem,
+          name: newItem.name,
+          category_id: parseInt(newItem.category_id),
+          size_id: parseInt(newItem.size_id),
+          condition: newItem.condition,
           purchase_price: parseFloat(newItem.purchase_price),
-          selling_price: parseFloat(newItem.selling_price)
+          selling_price: parseFloat(newItem.selling_price),
+          status: newItem.status
         }])
 
       if (error) throw error
@@ -54,8 +84,8 @@ function VintedKlamotten({ onLogout, showToast, projectName, onBack }) {
       setShowAddForm(false)
       setNewItem({
         name: '',
-        category: '',
-        size: '',
+        category_id: '',
+        size_id: '',
         condition: 'neuwertig',
         purchase_price: '',
         selling_price: '',
@@ -111,6 +141,13 @@ function VintedKlamotten({ onLogout, showToast, projectName, onBack }) {
       showToast('Fehler beim Markieren', 'error')
     }
   }
+
+  // Filter anwenden
+  const filteredClothes = clothes.filter(item => {
+    const categoryMatch = filterCategory === 'all' || item.category_id === parseInt(filterCategory)
+    const sizeMatch = filterSize === 'all' || item.size_id === parseInt(filterSize)
+    return categoryMatch && sizeMatch
+  })
 
   const totalProfit = clothes
     .filter(item => item.status === 'verkauft')
@@ -184,7 +221,7 @@ function VintedKlamotten({ onLogout, showToast, projectName, onBack }) {
         {/* Add Form Modal */}
         {showAddForm && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white border border-[var(--vintage-border)] rounded-lg p-6 w-full max-w-md">
+            <div className="bg-white border border-[var(--vintage-border)] rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
               <h2 className="text-lg text-[var(--vintage-charcoal)] mb-4">Neues Kleidungsstück</h2>
               <form onSubmit={handleAddItem} className="space-y-4">
                 <div>
@@ -200,29 +237,30 @@ function VintedKlamotten({ onLogout, showToast, projectName, onBack }) {
                 <div>
                   <label className="block text-xs uppercase tracking-wider text-[var(--vintage-brown)] mb-1">Kategorie *</label>
                   <select
-                    value={newItem.category}
-                    onChange={(e) => setNewItem({...newItem, category: e.target.value})}
+                    value={newItem.category_id}
+                    onChange={(e) => setNewItem({...newItem, category_id: e.target.value})}
                     className="w-full px-3 py-2 bg-[var(--vintage-beige)] border border-[var(--vintage-border)] rounded text-sm"
                     required
                   >
                     <option value="">Wählen...</option>
-                    <option value="Oberteile">Oberteile</option>
-                    <option value="Hosen">Hosen</option>
-                    <option value="Kleider">Kleider</option>
-                    <option value="Jacken">Jacken</option>
-                    <option value="Schuhe">Schuhe</option>
-                    <option value="Accessoires">Accessoires</option>
+                    {categories.map(cat => (
+                      <option key={cat.id} value={cat.id}>{cat.name}</option>
+                    ))}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs uppercase tracking-wider text-[var(--vintage-brown)] mb-1">Größe</label>
-                  <input
-                    type="text"
-                    value={newItem.size}
-                    onChange={(e) => setNewItem({...newItem, size: e.target.value})}
+                  <label className="block text-xs uppercase tracking-wider text-[var(--vintage-brown)] mb-1">Größe *</label>
+                  <select
+                    value={newItem.size_id}
+                    onChange={(e) => setNewItem({...newItem, size_id: e.target.value})}
                     className="w-full px-3 py-2 bg-[var(--vintage-beige)] border border-[var(--vintage-border)] rounded text-sm"
-                    placeholder="S, M, L, XL, 38, 40, etc."
-                  />
+                    required
+                  >
+                    <option value="">Wählen...</option>
+                    {sizes.map(size => (
+                      <option key={size.id} value={size.id}>{size.name}</option>
+                    ))}
+                  </select>
                 </div>
                 <div>
                   <label className="block text-xs uppercase tracking-wider text-[var(--vintage-brown)] mb-1">Zustand</label>
@@ -279,10 +317,40 @@ function VintedKlamotten({ onLogout, showToast, projectName, onBack }) {
           </div>
         )}
 
+        {/* Filter */}
+        <div className="mb-6 flex flex-wrap gap-4">
+          <div>
+            <label className="block text-xs uppercase tracking-wider text-[var(--vintage-brown)] mb-1">Kategorie filtern</label>
+            <select
+              value={filterCategory}
+              onChange={(e) => setFilterCategory(e.target.value)}
+              className="px-3 py-2 bg-white border border-[var(--vintage-border)] rounded text-sm"
+            >
+              <option value="all">Alle Kategorien</option>
+              {categories.map(cat => (
+                <option key={cat.id} value={cat.id}>{cat.name}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs uppercase tracking-wider text-[var(--vintage-brown)] mb-1">Größe filtern</label>
+            <select
+              value={filterSize}
+              onChange={(e) => setFilterSize(e.target.value)}
+              className="px-3 py-2 bg-white border border-[var(--vintage-border)] rounded text-sm"
+            >
+              <option value="all">Alle Größen</option>
+              {sizes.map(size => (
+                <option key={size.id} value={size.id}>{size.name}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
         {/* Clothes List */}
         <div className="bg-white border border-[var(--vintage-border)] rounded-lg overflow-hidden">
           <div className="p-4 border-b border-[var(--vintage-border)]">
-            <h2 className="text-lg text-[var(--vintage-charcoal)]">Kleidungsstücke</h2>
+            <h2 className="text-lg text-[var(--vintage-charcoal)]">Kleidungsstücke ({filteredClothes.length})</h2>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full">
@@ -300,11 +368,11 @@ function VintedKlamotten({ onLogout, showToast, projectName, onBack }) {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[var(--vintage-border)]">
-                {clothes.map((item) => (
+                {filteredClothes.map((item) => (
                   <tr key={item.id} className="hover:bg-[var(--vintage-beige)]/50">
                     <td className="px-4 py-3 text-sm text-[var(--vintage-charcoal)]">{item.name}</td>
-                    <td className="px-4 py-3 text-sm text-[var(--vintage-gray)]">{item.category}</td>
-                    <td className="px-4 py-3 text-sm text-[var(--vintage-gray)]">{item.size || '-'}</td>
+                    <td className="px-4 py-3 text-sm text-[var(--vintage-gray)]">{item.categories?.name || '-'}</td>
+                    <td className="px-4 py-3 text-sm text-[var(--vintage-gray)]">{item.sizes?.name || '-'}</td>
                     <td className="px-4 py-3 text-sm text-[var(--vintage-gray)]">{item.condition}</td>
                     <td className="px-4 py-3 text-sm text-[var(--vintage-gray)]">€{item.purchase_price?.toFixed(2)}</td>
                     <td className="px-4 py-3 text-sm text-[var(--vintage-gray)]">€{item.selling_price?.toFixed(2)}</td>
@@ -342,9 +410,12 @@ function VintedKlamotten({ onLogout, showToast, projectName, onBack }) {
                 ))}
               </tbody>
             </table>
-            {clothes.length === 0 && (
+            {filteredClothes.length === 0 && (
               <div className="p-8 text-center text-[var(--vintage-gray)]">
-                Noch keine Kleidungsstücke hinzugefügt.
+                {clothes.length === 0 
+                  ? 'Noch keine Kleidungsstücke hinzugefügt.'
+                  : 'Keine Kleidungsstücke mit den gewählten Filtern.'
+                }
               </div>
             )}
           </div>

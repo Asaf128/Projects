@@ -360,6 +360,35 @@ function Dashboard({ onLogout, showToast, projectName, onBack }) {
     }
   };
 
+  const handleDeleteSale = async (saleId, pcName) => {
+    try {
+      // Verkauf aus sales-Tabelle löschen
+      const { error: saleError } = await supabase
+        .from('sales')
+        .delete()
+        .eq('id', saleId);
+
+      if (saleError) throw saleError;
+
+      // PC-Status zurück auf "available" setzen
+      const { error: pcError } = await supabase
+        .from('pcs')
+        .update({ 
+          status: 'available',
+          sold_at: null
+        })
+        .eq('name', pcName);
+
+      if (pcError) throw pcError;
+
+      await loadData();
+      showToast('Verkauf gelöscht! PC ist wieder verfügbar.', 'success');
+    } catch (error) {
+      console.error('Error deleting sale:', error);
+      showToast('Fehler beim Löschen', 'error');
+    }
+  };
+
   const clearAllData = async () => {
     try {
       await supabase.from('pc_parts').delete().neq('id', 0);
@@ -1071,6 +1100,7 @@ function Dashboard({ onLogout, showToast, projectName, onBack }) {
                       <th className="text-left text-xs uppercase tracking-wider text-[var(--vintage-brown)] px-4 py-3">Kosten</th>
                       <th className="text-left text-xs uppercase tracking-wider text-[var(--vintage-brown)] px-4 py-3">Verkauf</th>
                       <th className="text-left text-xs uppercase tracking-wider text-[var(--vintage-brown)] px-4 py-3">Gewinn</th>
+                      <th className="px-4 py-3"></th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1083,6 +1113,18 @@ function Dashboard({ onLogout, showToast, projectName, onBack }) {
                         <td className="px-4 py-3 text-sm text-[var(--vintage-gray)]">{sale.total_cost.toFixed(2)} €</td>
                         <td className="px-4 py-3 text-sm text-[var(--vintage-gray)]">{sale.selling_price.toFixed(2)} €</td>
                         <td className="px-4 py-3 text-sm text-[var(--vintage-olive)]">+{sale.profit.toFixed(2)} €</td>
+                        <td className="px-4 py-3">
+                          <button
+                            onClick={() => handleDeleteSale(sale.id, sale.pc_name)}
+                            className="text-[var(--vintage-gray)] hover:text-red-600 transition-colors"
+                            title="Verkauf löschen"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <line x1="18" y1="6" x2="6" y2="18"></line>
+                              <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                          </button>
+                        </td>
                       </tr>
                     ))}
                   </tbody>

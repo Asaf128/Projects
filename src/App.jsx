@@ -4,6 +4,7 @@ import { SpeedInsights } from '@vercel/speed-insights/react'
 import Login from './components/Login'
 import Dashboard from './components/Dashboard'
 import KanbanBoard from './components/KanbanBoard'
+import TimeTracker from './components/TimeTracker'
 import Toast from './components/Toast'
 import Impressum from './components/Impressum'
 
@@ -38,7 +39,8 @@ function App() {
 
   const projects = [
     { id: 'kleinanzeigen-pcs', name: 'Kleinanzeigen-PCs', description: 'PC-Teile und Builds verwalten' },
-    { id: 'to-dos', name: 'To-Do\'s', description: 'Kanban Board für Task-Management' }
+    { id: 'to-dos', name: 'To-Do\'s', description: 'Kanban Board für Task-Management' },
+    { id: 'timestamp', name: 'TimeStamp', description: 'Arbeitszeit erfassen und verwalten' }
   ]
 
   return (
@@ -47,6 +49,13 @@ function App() {
         activeProject ? (
           activeProject === 'to-dos' ? (
             <KanbanBoard 
+              onLogout={handleLogout} 
+              showToast={showToast}
+              projectName={projects.find(p => p.id === activeProject)?.name}
+              onBack={() => setActiveProject(null)}
+            />
+          ) : activeProject === 'timestamp' ? (
+            <TimeTracker 
               onLogout={handleLogout} 
               showToast={showToast}
               projectName={projects.find(p => p.id === activeProject)?.name}

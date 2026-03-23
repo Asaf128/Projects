@@ -89,3 +89,70 @@ CREATE TRIGGER update_pcs_updated_at BEFORE UPDATE ON pcs
 INSERT INTO app_users (email, password_hash) 
 VALUES ('ceb.asaf@gmail.com', 'managed_by_supabase_auth')
 ON CONFLICT (email) DO NOTHING;
+
+-- ============================================
+-- KANBAN BOARD / TO-DO SYSTEM
+-- ============================================
+
+-- 10. Tabelle für Task-Status
+CREATE TABLE IF NOT EXISTS task_statuses (
+  id BIGSERIAL PRIMARY KEY,
+  name VARCHAR(50) NOT NULL UNIQUE,
+  display_order INTEGER NOT NULL DEFAULT 0,
+  color VARCHAR(20) DEFAULT '#6b7280',
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Standard-Status einfügen
+INSERT INTO task_statuses (name, display_order, color) VALUES
+  ('Backlog', 1, '#6b7280'),
+  ('To Do', 2, '#3b82f6'),
+  ('In Progress', 3, '#f59e0b'),
+  ('Review', 4, '#8b5cf6'),
+  ('Done', 5, '#10b981')
+ON CONFLICT (name) DO NOTHING;
+
+-- 11. Tabelle für Tasks
+CREATE TABLE IF NOT EXISTS tasks (
+  id BIGSERIAL PRIMARY KEY,
+  task_number VARCHAR(20) UNIQUE NOT NULL,
+  title VARCHAR(500) NOT NULL,
+  description TEXT,
+  status_id BIGINT REFERENCES task_statuses(id) ON DELETE SET NULL,
+  assigned_to VARCHAR(255),
+  priority VARCHAR(20) DEFAULT 'medium',
+  due_date DATE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 12. Sequence für Task-Nummern
+CREATE SEQUENCE IF NOT EXISTS task_number_seq START 1;
+
+-- 13. Funktion zum Generieren der Task-Nummer
+CREATE OR REPLACE FUNCTION generate_task_number()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.task_number := 'TNR-' || nextval('task_number_seq');
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- 14. Trigger für automatische Task-Nummer
+DROP TRIGGER IF EXISTS set_task_number ON tasks;
+CREATE TRIGGER set_task_number
+  BEFORE INSERT ON tasks
+  FOR EACH ROW
+  EXECUTE FUNCTION generate_task_number();
+
+-- 15. Trigger für updated_at bei Tasks
+CREATE TRIGGER update_tasks_updated_at BEFORE UPDATE ON tasks
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- 16. RLS für Task-Tabellen aktivieren
+ALTER TABLE task_statuses ENABLE ROW LEVEL SECURITY;
+ALTER TABLE tasks ENABLE ROW LEVEL SECURITY;
+
+-- 17. Policies für Task-Tabellen
+CREATE POLICY "Allow authenticated users" ON task_statuses FOR ALL USING (true);
+CREATE POLICY "Allow authenticated users" ON tasks FOR ALL USING (true);

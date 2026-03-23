@@ -3,6 +3,7 @@ import { Analytics } from '@vercel/analytics/react'
 import { SpeedInsights } from '@vercel/speed-insights/react'
 import Login from './components/Login'
 import Dashboard from './components/Dashboard'
+import KanbanBoard from './components/KanbanBoard'
 import Toast from './components/Toast'
 import Impressum from './components/Impressum'
 
@@ -37,19 +38,28 @@ function App() {
 
   const projects = [
     { id: 'kleinanzeigen-pcs', name: 'Kleinanzeigen-PCs', description: 'PC-Teile und Builds verwalten' },
-    { id: 'tik-toks', name: 'Tik-Toks', description: 'TikTok Content verwalten' }
+    { id: 'to-dos', name: 'To-Do\'s', description: 'Kanban Board für Task-Management' }
   ]
 
   return (
     <div>
       {isLoggedIn ? (
         activeProject ? (
-          <Dashboard 
-            onLogout={handleLogout} 
-            showToast={showToast}
-            projectName={projects.find(p => p.id === activeProject)?.name}
-            onBack={() => setActiveProject(null)}
-          />
+          activeProject === 'to-dos' ? (
+            <KanbanBoard 
+              onLogout={handleLogout} 
+              showToast={showToast}
+              projectName={projects.find(p => p.id === activeProject)?.name}
+              onBack={() => setActiveProject(null)}
+            />
+          ) : (
+            <Dashboard 
+              onLogout={handleLogout} 
+              showToast={showToast}
+              projectName={projects.find(p => p.id === activeProject)?.name}
+              onBack={() => setActiveProject(null)}
+            />
+          )
         ) : (
           <div className="min-h-screen bg-[var(--vintage-cream)]">
             <header className="bg-white border-b border-[var(--vintage-border)] px-6 py-4">

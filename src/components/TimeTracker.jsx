@@ -15,6 +15,25 @@ function TimeTracker({ onLogout, showToast, projectName, onBack }) {
     week: 0,
     month: 0
   });
+  const [currentTime, setCurrentTime] = useState(new Date());
+  const [elapsedTime, setElapsedTime] = useState(0);
+
+  // Timer für Live-Updates
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Berechne verstrichene Zeit wenn eingestempelt
+  useEffect(() => {
+    if (isClocked && currentEntry) {
+      const clockInTime = new Date(currentEntry.clock_in);
+      const elapsed = (currentTime - clockInTime) / 1000 / 60; // Minuten
+      setElapsedTime(elapsed);
+    }
+  }, [currentTime, isClocked, currentEntry]);
 
   // User ID - nicht verwendet, da RLS deaktiviert ist
 
@@ -73,12 +92,14 @@ function TimeTracker({ onLogout, showToast, projectName, onBack }) {
     let todayTotal = 0;
     let weekTotal = 0;
     let monthTotal = 0;
+    const workedDays = new Set();
 
     timeEntries.forEach(entry => {
       if (entry.clock_out) {
         const clockIn = new Date(entry.clock_in);
         const clockOut = new Date(entry.clock_out);
         const duration = (clockOut - clockIn) / 1000 / 60;
+        const dateKey = clockIn.toISOString().split('T')[0];
 
         if (clockIn >= today) {
           todayTotal += duration;
@@ -89,13 +110,33 @@ function TimeTracker({ onLogout, showToast, projectName, onBack }) {
         if (clockIn >= monthStart) {
           monthTotal += duration;
         }
+
+        // Sammle Tage mit >= 8 Stunden
+        if (duration >= 480) { // 8 Stunden = 480 Minuten
+          workedDays.add(dateKey);
+        }
       }
     });
+
+    // Füge aktuelle Session hinzu wenn eingestempelt
+    if (isClocked && currentEntry) {
+      const clockIn = new Date(currentEntry.clock_in);
+      if (clockIn >= today) {
+        todayTotal += elapsedTime;
+      }
+      if (clockIn >= weekStart) {
+        weekTotal += elapsedTime;
+      }
+      if (clockIn >= monthStart) {
+        monthTotal += elapsedTime;
+      }
+    }
 
     setStats({
       today: todayTotal,
       week: weekTotal,
-      month: monthTotal
+      month: monthTotal,
+      workedDays: workedDays.size
     });
   };
 
@@ -389,10 +430,16 @@ function TimeTracker({ onLogout, showToast, projectName, onBack }) {
 
               {isClocked && currentEntry && (
                 <div className="mb-6">
-                  <span className="text-sm text-[var(--vintage-gray)]">Seit </span>
-                  <span className="text-xl text-[var(--vintage-charcoal)]" style={{ fontFamily: 'Georgia, serif' }}>
-                    {formatTime(currentEntry.clock_in)}
-                  </span>
+                  <div className="mb-2">
+                    <span className="text-sm text-[var(--vintage-gray)]">Seit </span>
+                    <span className="text-xl text-[var(--vintage-charcoal)]" style={{ fontFamily: 'Georgia, serif' }}>
+                      {formatTime(currentEntry.clock_in)}
+                    </span>
+                  </div>
+                  <div className="text-3xl text-[var(--vintage-olive)] font-bold" style={{ fontFamily: 'Georgia, serif' }}>
+                    {formatDuration(elapsedTime)}
+                  </div>
+                  <p className="text-xs text-[var(--vintage-gray)] mt-1">Verstrichene Zeit</p>
                 </div>
               )}
 
@@ -414,6 +461,9 @@ function TimeTracker({ onLogout, showToast, projectName, onBack }) {
               <div className="bg-white border border-[var(--vintage-border)] rounded-lg p-5">
                 <p className="text-xs uppercase tracking-wider text-[var(--vintage-gray)] mb-1">Heute</p>
                 <p className="text-2xl text-[var(--vintage-charcoal)]">{formatDuration(stats.today)}</p>
+                {isClocked && (
+                  <p className="text-xs text-[var(--vintage-olive)] mt-1">● Live</p>
+                )}
               </div>
               <div className="bg-white border border-[var(--vintage-border)] rounded-lg p-5">
                 <p className="text-xs uppercase tracking-wider text-[var(--vintage-gray)] mb-1">Diese Woche</p>
@@ -528,9 +578,9 @@ function TimeTracker({ onLogout, showToast, projectName, onBack }) {
                     <span className="text-sm text-[var(--vintage-brown)]">{timeEntries.length}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-sm text-[var(--vintage-charcoal)]">Gearbeitete Tage</span>
+                    <span className="text-sm text-[var(--vintage-charcoal)]">Vollständige Tage (≥8h)</span>
                     <span className="text-sm text-[var(--vintage-brown)]">
-                      {[...new Set(timeEntries.map(e => new Date(e.clock_in).toISOString().split('T')[0]))].length}
+                      {stats.workedDays || 0}
                     </span>
                   </div>
                 </div>

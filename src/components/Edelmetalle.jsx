@@ -31,6 +31,7 @@ export default function Edelmetalle({ onLogout, showToast, onBack }) {
   const [holdingsLoading, setHoldingsLoading] = useState(true)
   const [showAddForm, setShowAddForm] = useState(false)
   const [editingHolding, setEditingHolding] = useState(null)
+  const [spotLoading, setSpotLoading] = useState(false)
   const [selectedMetal, setSelectedMetal] = useState('gold')
   const [newHolding, setNewHolding] = useState({
     metal_type: 'gold',
@@ -90,6 +91,33 @@ export default function Edelmetalle({ onLogout, showToast, onBack }) {
     }
   }, [showToast])
 
+  const fetchHistoricalSpot = useCallback(async (dateStr, metalType) => {
+    if (!dateStr || !metalType) return
+    const date = dateStr.slice(0, 10) // YYYY-MM-DD
+    const today = new Date().toISOString().slice(0, 10)
+    const cdnDate = date >= today ? 'latest' : date
+    const metalKey = { gold: 'xau', silver: 'xag', platinum: 'xpt', palladium: 'xpd' }[metalType]
+    if (!metalKey) return
+    setSpotLoading(true)
+    try {
+      const res = await fetch(
+        `https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@${cdnDate}/v1/currencies/${metalKey}.min.json`
+      )
+      const data = await res.json()
+      const eurPerOz = data?.[metalKey]?.eur
+      if (eurPerOz) {
+        setNewHolding(prev => ({
+          ...prev,
+          spot_price_per_gram_eur: (eurPerOz / TROY_OZ_TO_GRAMS).toFixed(6)
+        }))
+      }
+    } catch (error) {
+      console.error('Error fetching historical spot:', error)
+    } finally {
+      setSpotLoading(false)
+    }
+  }, [])
+
   const loadHoldings = useCallback(async () => {
     setHoldingsLoading(true)
     try {
@@ -114,19 +142,24 @@ export default function Edelmetalle({ onLogout, showToast, onBack }) {
     return () => clearInterval(interval)
   }, [fetchPrices, loadHoldings])
 
+  // Auto-fetch historical spot price when date or metal changes in the form
+  useEffect(() => {
+    if (!showAddForm || !newHolding.purchase_date) return
+    fetchHistoricalSpot(newHolding.purchase_date, newHolding.metal_type)
+  }, [showAddForm, newHolding.purchase_date, newHolding.metal_type, fetchHistoricalSpot])
+
   const openAddForm = () => {
     const now = new Date()
     const localISO = new Date(now.getTime() - now.getTimezoneOffset() * 60000)
       .toISOString()
       .slice(0, 16)
-    const currentSpot = spotPrices['gold']?.eurPerGram
     setNewHolding({
       metal_type: 'gold',
       name: '',
       weight_display: '',
       weight_unit: 'g',
       purchase_price_eur: '',
-      spot_price_per_gram_eur: currentSpot ? currentSpot.toFixed(6) : '',
+      spot_price_per_gram_eur: '',
       purchase_date: localISO,
       notes: ''
     })
@@ -135,12 +168,7 @@ export default function Edelmetalle({ onLogout, showToast, onBack }) {
   }
 
   const handleMetalChange = (metalType) => {
-    const currentSpot = spotPrices[metalType]?.eurPerGram
-    setNewHolding(prev => ({
-      ...prev,
-      metal_type: metalType,
-      spot_price_per_gram_eur: currentSpot ? currentSpot.toFixed(6) : prev.spot_price_per_gram_eur
-    }))
+    setNewHolding(prev => ({ ...prev, metal_type: metalType }))
   }
 
   const handleSaveHolding = async () => {
@@ -780,10 +808,17 @@ export default function Edelmetalle({ onLogout, showToast, onBack }) {
 
               <div>
                 <label className="block text-xs uppercase tracking-wider text-[var(--vintage-brown)] mb-1">
-                  Spot-Preis zum Kaufzeitpunkt (EUR/g)
-                  <span className="ml-1 text-[var(--vintage-gray)] normal-case tracking-normal font-normal">
-                    – für Spread-Berechnung
-                  </span>
+                  Spot-Preis zum Kaufdatum (EUR/g)
+                  {spotLoading && (
+                    <span className="ml-2 text-[var(--vintage-gray)] normal-case tracking-normal font-normal">
+                      wird geladen…
+                    </span>
+                  )}
+                  {!spotLoading && newHolding.spot_price_per_gram_eur && (
+                    <span className="ml-2 text-[var(--vintage-olive)] normal-case tracking-normal font-normal">
+                      ✓ automatisch
+                    </span>
+                  )}
                 </label>
                 <input
                   type="number"
@@ -791,8 +826,9 @@ export default function Edelmetalle({ onLogout, showToast, onBack }) {
                   min="0"
                   value={newHolding.spot_price_per_gram_eur}
                   onChange={e => setNewHolding({ ...newHolding, spot_price_per_gram_eur: e.target.value })}
-                  placeholder="Automatisch befüllt oder manuell eingeben"
-                  className="w-full px-3 py-2 bg-[var(--vintage-beige)] border border-[var(--vintage-border)] rounded text-sm"
+                  placeholder={spotLoading ? 'Wird geladen…' : 'Manuell überschreiben möglich'}
+                  disabled={spotLoading}
+                  className="w-full px-3 py-2 bg-[var(--vintage-beige)] border border-[var(--vintage-border)] rounded text-sm disabled:opacity-50"
                 />
                 {newHolding.spot_price_per_gram_eur && newHolding.weight_display && newHolding.purchase_price_eur && (() => {
                   const spotVal =

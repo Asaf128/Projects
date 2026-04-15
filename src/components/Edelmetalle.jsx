@@ -34,6 +34,7 @@ export default function Edelmetalle({ onLogout, showToast, onBack }) {
   const [spotLoading, setSpotLoading] = useState(false)
   const [selectedMetal, setSelectedMetal] = useState('gold')
   const [showPerfInEur, setShowPerfInEur] = useState(false)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [newHolding, setNewHolding] = useState({
     metal_type: 'gold',
     product_type: 'coin',
@@ -340,26 +341,86 @@ export default function Edelmetalle({ onLogout, showToast, onBack }) {
     <div className="min-h-screen flex bg-[var(--vintage-cream)]">
       {/* Mobile Header */}
       <div className="lg:hidden fixed top-0 left-0 right-0 bg-white border-b border-[var(--vintage-border)] z-30 px-4 py-3 flex items-center justify-between">
-        <button onClick={onBack} className="text-[var(--vintage-brown)] text-sm">← Zurück</button>
-        <span className="text-sm text-[var(--vintage-charcoal)]" style={{ fontFamily: 'Georgia, serif' }}>Edelmetalle</span>
-        <button onClick={onLogout} className="text-xs text-[var(--vintage-gray)]">Abmelden</button>
+        <div className="flex items-center gap-2 min-w-0">
+          <button onClick={onBack} className="p-1 text-[var(--vintage-gray)] hover:text-[var(--vintage-brown)] flex-shrink-0">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="19" y1="12" x2="5" y2="12"></line>
+              <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+          </button>
+          <button onClick={onBack} className="text-lg text-[var(--vintage-gray)] hover:text-black transition-colors flex-shrink-0" style={{ fontFamily: 'Georgia, serif' }}>Projects</button>
+          <span className="text-lg text-[var(--vintage-gray)] flex-shrink-0">/</span>
+          <h1 className="text-lg text-[var(--vintage-charcoal)] truncate" style={{ fontFamily: 'Georgia, serif' }}>Edelmetalle</h1>
+        </div>
+        <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="p-2 text-[var(--vintage-gray)] hover:text-[var(--vintage-brown)]">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+        </button>
       </div>
+
+      {/* Mobile Menu */}
+      {mobileMenuOpen && (
+        <div className="lg:hidden fixed inset-0 bg-black/50 z-40" onClick={() => setMobileMenuOpen(false)}>
+          <aside className="w-64 h-full bg-[var(--vintage-beige)] border-r border-[var(--vintage-border)] p-4" onClick={e => e.stopPropagation()}>
+            <nav className="space-y-2 mt-12">
+              {navItems.map(item => (
+                <button
+                  key={item.id}
+                  onClick={() => { setActiveTab(item.id); setMobileMenuOpen(false) }}
+                  className={`w-full text-left px-4 py-3 text-sm rounded transition-colors flex items-center gap-3 ${
+                    activeTab === item.id
+                      ? 'bg-[var(--vintage-brown)] text-white'
+                      : 'text-[var(--vintage-brown)] hover:bg-[var(--vintage-brown)]/10'
+                  }`}
+                >
+                  <span>{item.icon}</span>
+                  <span>{item.label}</span>
+                </button>
+              ))}
+            </nav>
+            <div className="mt-8 pt-4 border-t border-[var(--vintage-border)]">
+              <button onClick={onLogout} className="w-full px-4 py-2 text-sm text-[var(--vintage-gray)] hover:text-[var(--vintage-brown)] transition-colors">
+                Abmelden
+              </button>
+            </div>
+          </aside>
+        </div>
+      )}
 
       {/* Sidebar */}
       <aside className={`hidden lg:flex flex-col bg-[var(--vintage-beige)] border-r border-[var(--vintage-border)] transition-all duration-200 ${sidebarCollapsed ? 'w-16' : 'w-56'}`}>
-        <div className="flex items-center justify-between p-3 border-b border-[var(--vintage-border)] min-h-[57px]">
+        <div className="p-4 border-b border-[var(--vintage-border)] flex items-center justify-between">
           {!sidebarCollapsed && (
-            <span className="text-sm text-[var(--vintage-charcoal)] truncate" style={{ fontFamily: 'Georgia, serif' }}>
-              Edelmetalle
-            </span>
+            <div className="flex items-center gap-2 min-w-0">
+              <button onClick={onBack} className="text-lg text-[var(--vintage-gray)] hover:text-black transition-colors flex-shrink-0" style={{ fontFamily: 'Georgia, serif' }}>
+                Projects
+              </button>
+              <span className="text-lg text-[var(--vintage-gray)] flex-shrink-0">/</span>
+              <h1 className="text-lg text-[var(--vintage-charcoal)] tracking-wide truncate" style={{ fontFamily: 'Georgia, serif' }}>
+                Edelmetalle
+              </h1>
+            </div>
           )}
           <button
             onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            className="p-1 text-[var(--vintage-gray)] hover:text-[var(--vintage-brown)] ml-auto"
+            className="p-2 text-[var(--vintage-gray)] hover:text-[var(--vintage-brown)] transition-colors"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
-                d={sidebarCollapsed ? 'M9 5l7 7-7 7' : 'M15 19l-7-7 7-7'} />
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              {sidebarCollapsed ? (
+                <>
+                  <line x1="3" y1="12" x2="21" y2="12"></line>
+                  <line x1="3" y1="6" x2="21" y2="6"></line>
+                  <line x1="3" y1="18" x2="21" y2="18"></line>
+                </>
+              ) : (
+                <>
+                  <line x1="19" y1="12" x2="5" y2="12"></line>
+                  <polyline points="12 19 5 12 12 5"></polyline>
+                </>
+              )}
             </svg>
           </button>
         </div>
@@ -379,46 +440,22 @@ export default function Edelmetalle({ onLogout, showToast, onBack }) {
             </button>
           ))}
         </nav>
-        <div className="p-2 border-t border-[var(--vintage-border)] space-y-1">
-          <button
-            onClick={onBack}
-            className="w-full flex items-center gap-3 px-3 py-2 rounded text-sm text-[var(--vintage-gray)] hover:bg-[var(--vintage-brown)]/10 transition-colors"
-          >
-            <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-            </svg>
-            {!sidebarCollapsed && <span>Zurück</span>}
-          </button>
+        <div className="p-2 border-t border-[var(--vintage-border)]">
           <button
             onClick={onLogout}
-            className="w-full flex items-center gap-3 px-3 py-2 rounded text-sm text-[var(--vintage-gray)] hover:bg-[var(--vintage-brown)]/10 transition-colors"
+            className={`w-full px-4 py-2 text-sm text-[var(--vintage-gray)] hover:text-[var(--vintage-brown)] transition-colors ${sidebarCollapsed ? 'justify-center flex' : ''}`}
           >
-            <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-            </svg>
-            {!sidebarCollapsed && <span>Abmelden</span>}
+            {sidebarCollapsed ? (
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
+            ) : 'Abmelden'}
           </button>
         </div>
       </aside>
 
       {/* Main Content */}
       <main className="flex-1 lg:p-8 p-4 pt-20 lg:pt-8 overflow-auto">
-        {/* Mobile Tabs */}
-        <div className="lg:hidden flex gap-2 mb-6">
-          {navItems.map(item => (
-            <button
-              key={item.id}
-              onClick={() => setActiveTab(item.id)}
-              className={`flex-1 py-2 text-xs rounded transition-colors ${
-                activeTab === item.id
-                  ? 'bg-[var(--vintage-brown)] text-white'
-                  : 'bg-white border border-[var(--vintage-border)] text-[var(--vintage-brown)]'
-              }`}
-            >
-              {item.label}
-            </button>
-          ))}
-        </div>
 
         {/* ── TAB: PREISE ── */}
         {activeTab === 'preise' && (

@@ -207,3 +207,7 @@ CREATE POLICY "Allow authenticated users" ON precious_metal_holdings
   FOR ALL
   USING (auth.uid() IS NOT NULL)
   WITH CHECK (auth.uid() IS NOT NULL);
+
+-- Produktart (Münze, Barren, Round, Sonstiges) zu Edelmetall-Käufen hinzufügen
+ALTER TABLE precious_metal_holdings
+ADD COLUMN IF NOT EXISTS product_type VARCHAR(20) DEFAULT 'coin';

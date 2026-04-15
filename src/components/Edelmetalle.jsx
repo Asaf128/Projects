@@ -36,6 +36,7 @@ export default function Edelmetalle({ onLogout, showToast, onBack }) {
   const [showPerfInEur, setShowPerfInEur] = useState(false)
   const [newHolding, setNewHolding] = useState({
     metal_type: 'gold',
+    product_type: 'coin',
     name: '',
     weight_display: '',
     weight_unit: 'g',
@@ -204,6 +205,7 @@ export default function Edelmetalle({ onLogout, showToast, onBack }) {
     }
     const payload = {
       metal_type: newHolding.metal_type,
+      product_type: newHolding.product_type || 'coin',
       name: newHolding.name,
       weight_grams: weightGrams,
       purchase_price_eur: parseFloat(newHolding.purchase_price_eur),
@@ -255,6 +257,7 @@ export default function Edelmetalle({ onLogout, showToast, onBack }) {
       .slice(0, 16)
     setNewHolding({
       metal_type: holding.metal_type,
+      product_type: holding.product_type || 'coin',
       name: holding.name,
       weight_display: holding.weight_grams,
       weight_unit: 'g',
@@ -701,6 +704,11 @@ export default function Edelmetalle({ onLogout, showToast, onBack }) {
                             <span className="text-xs px-2 py-0.5 bg-[var(--vintage-beige)] text-[var(--vintage-brown)] rounded uppercase tracking-wider">
                               {metalName(holding.metal_type)}
                             </span>
+                            {holding.product_type && holding.product_type !== 'other' && (
+                              <span className="text-xs px-2 py-0.5 border border-[var(--vintage-border)] text-[var(--vintage-gray)] rounded">
+                                {{ coin: 'Münze', bar: 'Barren', round: 'Round' }[holding.product_type] || holding.product_type}
+                              </span>
+                            )}
                             <span className="text-sm text-[var(--vintage-charcoal)] truncate">{holding.name}</span>
                           </div>
                           <div className="text-xs text-[var(--vintage-gray)] mb-2">
@@ -797,6 +805,22 @@ export default function Edelmetalle({ onLogout, showToast, onBack }) {
                   {METALS.map(m => (
                     <option key={m.id} value={m.id}>{m.name}</option>
                   ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs uppercase tracking-wider text-[var(--vintage-brown)] mb-1">
+                  Produktart *
+                </label>
+                <select
+                  value={newHolding.product_type}
+                  onChange={e => setNewHolding({ ...newHolding, product_type: e.target.value })}
+                  className="w-full px-3 py-2 bg-[var(--vintage-beige)] border border-[var(--vintage-border)] rounded text-sm"
+                >
+                  <option value="coin">Münze</option>
+                  <option value="bar">Barren</option>
+                  <option value="round">Round</option>
+                  <option value="other">Sonstiges</option>
                 </select>
               </div>
 

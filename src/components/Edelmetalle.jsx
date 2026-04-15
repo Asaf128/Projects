@@ -644,12 +644,16 @@ export default function Edelmetalle({ onLogout, showToast, onBack }) {
                           <div className="text-xs text-[var(--vintage-gray)] mb-2">
                             {dateStr} · {timeStr} Uhr · {fmt(parseFloat(holding.weight_grams), 3)} g
                           </div>
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-1 text-xs">
+                          <div className="grid grid-cols-2 md:grid-cols-5 gap-x-4 gap-y-1 text-xs">
                             <div>
                               <span className="text-[var(--vintage-gray)]">Kaufpreis: </span>
                               <span className="text-[var(--vintage-charcoal)]">
                                 {fmtEur(parseFloat(holding.purchase_price_eur))}
                               </span>
+                            </div>
+                            <div>
+                              <span className="text-[var(--vintage-gray)]">Wert Kauftag: </span>
+                              <span className="text-[var(--vintage-charcoal)]">{fmtEur(spotAtPurchase)}</span>
                             </div>
                             <div>
                               <span className="text-[var(--vintage-gray)]">Akt. Wert: </span>

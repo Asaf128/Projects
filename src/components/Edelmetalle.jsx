@@ -94,25 +94,47 @@ export default function Edelmetalle({ onLogout, showToast, onBack }) {
   const fetchHistoricalSpot = useCallback(async (dateStr, metalType) => {
     if (!dateStr || !metalType) return
     const date = dateStr.slice(0, 10) // YYYY-MM-DD
-    const today = new Date().toISOString().slice(0, 10)
-    const cdnDate = date >= today ? 'latest' : date
-    const metalKey = { gold: 'xau', silver: 'xag', platinum: 'xpt', palladium: 'xpd' }[metalType]
+    const metalKey = { gold: 'XAU', silver: 'XAG', platinum: 'XPT', palladium: 'XPD' }[metalType]
     if (!metalKey) return
     setSpotLoading(true)
     try {
+      // frankfurter.dev v2: ECB + 40 central banks, historical data, CORS enabled
+      // rates[metalKey] = oz per EUR → invert to get EUR per oz
       const res = await fetch(
-        `https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@${cdnDate}/v1/currencies/${metalKey}.min.json`
+        `https://api.frankfurter.dev/v2/rates?date=${date}&base=EUR`
       )
       const data = await res.json()
-      const eurPerOz = data?.[metalKey]?.eur
-      if (eurPerOz) {
+      const ozPerEur = data?.rates?.[metalKey]
+      if (ozPerEur) {
+        const eurPerGram = (1 / ozPerEur) / TROY_OZ_TO_GRAMS
         setNewHolding(prev => ({
           ...prev,
-          spot_price_per_gram_eur: (eurPerOz / TROY_OZ_TO_GRAMS).toFixed(6)
+          spot_price_per_gram_eur: eurPerGram.toFixed(6)
         }))
+      } else {
+        throw new Error('Metal not found in response')
       }
     } catch (error) {
       console.error('Error fetching historical spot:', error)
+      // Fallback: fawazahmed0 CDN
+      try {
+        const today = new Date().toISOString().slice(0, 10)
+        const cdnDate = date >= today ? 'latest' : date
+        const fbKey = metalKey.toLowerCase()
+        const res2 = await fetch(
+          `https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@${cdnDate}/v1/currencies/${fbKey}.min.json`
+        )
+        const data2 = await res2.json()
+        const eurPerOz = data2?.[fbKey]?.eur
+        if (eurPerOz) {
+          setNewHolding(prev => ({
+            ...prev,
+            spot_price_per_gram_eur: (eurPerOz / TROY_OZ_TO_GRAMS).toFixed(6)
+          }))
+        }
+      } catch {
+        // both failed — leave field empty for manual input
+      }
     } finally {
       setSpotLoading(false)
     }

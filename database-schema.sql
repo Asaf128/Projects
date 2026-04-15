@@ -186,3 +186,24 @@ CREATE POLICY "Allow authenticated users" ON tasks
   FOR ALL
   USING (auth.uid() IS NOT NULL)
   WITH CHECK (auth.uid() IS NOT NULL);
+
+
+-- Edelmetalle: Käufe / Bestände
+CREATE TABLE IF NOT EXISTS precious_metal_holdings (
+  id BIGSERIAL PRIMARY KEY,
+  metal_type VARCHAR(20) NOT NULL,
+  name VARCHAR(255) NOT NULL,
+  weight_grams DECIMAL(10,4) NOT NULL,
+  purchase_price_eur DECIMAL(10,2) NOT NULL,
+  spot_price_per_gram_eur DECIMAL(12,6),
+  purchase_date TIMESTAMP WITH TIME ZONE NOT NULL,
+  notes TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+ALTER TABLE precious_metal_holdings ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Allow authenticated users" ON precious_metal_holdings
+  FOR ALL
+  USING (auth.uid() IS NOT NULL)
+  WITH CHECK (auth.uid() IS NOT NULL);

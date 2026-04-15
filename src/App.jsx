@@ -6,6 +6,7 @@ import Dashboard from './components/Dashboard'
 import KanbanBoard from './components/KanbanBoard'
 import TimeTracker from './components/TimeTracker'
 import VintedKlamotten from './components/VintedKlamotten'
+import Edelmetalle from './components/Edelmetalle'
 import Toast from './components/Toast'
 import Impressum from './components/Impressum'
 
@@ -42,7 +43,8 @@ function App() {
     { id: 'kleinanzeigen-pcs', name: 'Kleinanzeigen-PCs', description: 'PC-Teile und Builds verwalten' },
     { id: 'to-dos', name: 'To-Do\'s', description: 'Kanban Board für Task-Management' },
     { id: 'timestamp', name: 'TimeStamp', description: 'Arbeitszeit erfassen und verwalten' },
-    { id: 'vinted-klamotten', name: 'Vinted Klamotten', description: 'Kleidungsverkäufe auf Vinted verwalten' }
+    { id: 'vinted-klamotten', name: 'Vinted Klamotten', description: 'Kleidungsverkäufe auf Vinted verwalten' },
+    { id: 'edelmetalle', name: 'Edelmetalle', description: 'Gold, Silber & Co. verwalten' }
   ]
 
   return (
@@ -70,9 +72,16 @@ function App() {
               projectName={projects.find(p => p.id === activeProject)?.name}
               onBack={() => setActiveProject(null)}
             />
+          ) : activeProject === 'edelmetalle' ? (
+            <Edelmetalle
+              onLogout={handleLogout}
+              showToast={showToast}
+              projectName={projects.find(p => p.id === activeProject)?.name}
+              onBack={() => setActiveProject(null)}
+            />
           ) : (
-            <Dashboard 
-              onLogout={handleLogout} 
+            <Dashboard
+              onLogout={handleLogout}
               showToast={showToast}
               projectName={projects.find(p => p.id === activeProject)?.name}
               onBack={() => setActiveProject(null)}

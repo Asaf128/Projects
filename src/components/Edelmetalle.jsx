@@ -33,6 +33,7 @@ export default function Edelmetalle({ onLogout, showToast, onBack }) {
   const [editingHolding, setEditingHolding] = useState(null)
   const [spotLoading, setSpotLoading] = useState(false)
   const [selectedMetal, setSelectedMetal] = useState('gold')
+  const [showPerfInEur, setShowPerfInEur] = useState(false)
   const [newHolding, setNewHolding] = useState({
     metal_type: 'gold',
     name: '',
@@ -287,14 +288,17 @@ export default function Edelmetalle({ onLogout, showToast, onBack }) {
       currentValue != null && totalInvestment > 0
         ? ((currentValue - totalInvestment) / totalInvestment) * 100
         : null
+    const performanceEur = currentValue != null ? currentValue - totalInvestment : null
     return {
       ...metal,
       totalWeightGrams,
       totalInvestment,
+      totalSpotAtPurchase: hasSpotData ? totalSpotAtPurchase : null,
       currentValue,
       spread,
       spreadPercent,
       performance,
+      performanceEur,
       count: mh.length
     }
   }).filter(m => m.count > 0)
@@ -308,6 +312,11 @@ export default function Edelmetalle({ onLogout, showToast, onBack }) {
     totalCurrentValue != null && totalInvestment > 0
       ? ((totalCurrentValue - totalInvestment) / totalInvestment) * 100
       : null
+  const totalPerformanceEur =
+    totalCurrentValue != null ? totalCurrentValue - totalInvestment : null
+  const totalSpotAtPurchaseSum = portfolioByMetal.reduce(
+    (s, m) => s + (m.totalSpotAtPurchase || 0), 0
+  )
 
   const navItems = [
     {
@@ -513,7 +522,7 @@ export default function Edelmetalle({ onLogout, showToast, onBack }) {
             ) : (
               <>
                 {/* Summary */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="bg-white border border-[var(--vintage-border)] rounded-lg p-4">
                     <div className="text-xs text-[var(--vintage-gray)] uppercase tracking-wider mb-1">
                       Gesamtinvestment
@@ -525,6 +534,15 @@ export default function Edelmetalle({ onLogout, showToast, onBack }) {
                   </div>
                   <div className="bg-white border border-[var(--vintage-border)] rounded-lg p-4">
                     <div className="text-xs text-[var(--vintage-gray)] uppercase tracking-wider mb-1">
+                      Wert Kauftag
+                    </div>
+                    <div className="text-xl text-[var(--vintage-charcoal)]" style={{ fontFamily: 'Georgia, serif' }}>
+                      {totalSpotAtPurchaseSum > 0 ? fmtEur(totalSpotAtPurchaseSum) : '–'}
+                    </div>
+                    <div className="text-xs text-[var(--vintage-gray)]">ohne Spread</div>
+                  </div>
+                  <div className="bg-white border border-[var(--vintage-border)] rounded-lg p-4">
+                    <div className="text-xs text-[var(--vintage-gray)] uppercase tracking-wider mb-1">
                       Aktueller Wert
                     </div>
                     <div className="text-xl text-[var(--vintage-charcoal)]" style={{ fontFamily: 'Georgia, serif' }}>
@@ -532,7 +550,10 @@ export default function Edelmetalle({ onLogout, showToast, onBack }) {
                     </div>
                     <div className="text-xs text-[var(--vintage-gray)]">zu aktuellen Spot-Preisen</div>
                   </div>
-                  <div className="bg-white border border-[var(--vintage-border)] rounded-lg p-4">
+                  <button
+                    onClick={() => setShowPerfInEur(!showPerfInEur)}
+                    className="bg-white border border-[var(--vintage-border)] rounded-lg p-4 text-left hover:border-[var(--vintage-brown)] transition-colors"
+                  >
                     <div className="text-xs text-[var(--vintage-gray)] uppercase tracking-wider mb-1">
                       Performance
                     </div>
@@ -546,12 +567,18 @@ export default function Edelmetalle({ onLogout, showToast, onBack }) {
                       }`}
                       style={{ fontFamily: 'Georgia, serif' }}
                     >
-                      {totalPerformance != null
-                        ? `${totalPerformance >= 0 ? '+' : ''}${fmt(totalPerformance)} %`
-                        : '–'}
+                      {showPerfInEur
+                        ? (totalPerformanceEur != null
+                            ? `${totalPerformanceEur >= 0 ? '+' : ''}${fmtEur(totalPerformanceEur)}`
+                            : '–')
+                        : (totalPerformance != null
+                            ? `${totalPerformance >= 0 ? '+' : ''}${fmt(totalPerformance)} %`
+                            : '–')}
                     </div>
-                    <div className="text-xs text-[var(--vintage-gray)]">vs. Kaufpreis</div>
-                  </div>
+                    <div className="text-xs text-[var(--vintage-gray)]">
+                      vs. Kaufpreis · Klick für {showPerfInEur ? '%' : '€'}
+                    </div>
+                  </button>
                 </div>
 
                 {/* Per Metal */}
@@ -566,10 +593,14 @@ export default function Edelmetalle({ onLogout, showToast, onBack }) {
                           {metal.count} {metal.count === 1 ? 'Kauf' : 'Käufe'} · {fmt(metal.totalWeightGrams, 3)} g
                         </span>
                       </div>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 text-sm">
                         <div>
                           <div className="text-xs text-[var(--vintage-gray)] mb-0.5">Investment</div>
                           <div className="text-[var(--vintage-charcoal)]">{fmtEur(metal.totalInvestment)}</div>
+                        </div>
+                        <div>
+                          <div className="text-xs text-[var(--vintage-gray)] mb-0.5">Wert Kauftag</div>
+                          <div className="text-[var(--vintage-charcoal)]">{fmtEur(metal.totalSpotAtPurchase)}</div>
                         </div>
                         <div>
                           <div className="text-xs text-[var(--vintage-gray)] mb-0.5">Akt. Wert</div>
@@ -583,8 +614,13 @@ export default function Edelmetalle({ onLogout, showToast, onBack }) {
                               : '–'}
                           </div>
                         </div>
-                        <div>
-                          <div className="text-xs text-[var(--vintage-gray)] mb-0.5">Performance</div>
+                        <button
+                          onClick={() => setShowPerfInEur(!showPerfInEur)}
+                          className="text-left hover:opacity-70 transition-opacity"
+                        >
+                          <div className="text-xs text-[var(--vintage-gray)] mb-0.5">
+                            Performance {showPerfInEur ? '(€)' : '(%)'}
+                          </div>
                           <div
                             className={
                               metal.performance != null
@@ -594,11 +630,15 @@ export default function Edelmetalle({ onLogout, showToast, onBack }) {
                                 : 'text-[var(--vintage-charcoal)]'
                             }
                           >
-                            {metal.performance != null
-                              ? `${metal.performance >= 0 ? '+' : ''}${fmt(metal.performance)} %`
-                              : '–'}
+                            {showPerfInEur
+                              ? (metal.performanceEur != null
+                                  ? `${metal.performanceEur >= 0 ? '+' : ''}${fmtEur(metal.performanceEur)}`
+                                  : '–')
+                              : (metal.performance != null
+                                  ? `${metal.performance >= 0 ? '+' : ''}${fmt(metal.performance)} %`
+                                  : '–')}
                           </div>
-                        </div>
+                        </button>
                       </div>
                     </div>
                   ))}
@@ -687,7 +727,10 @@ export default function Edelmetalle({ onLogout, showToast, onBack }) {
                                 {spread != null ? `${fmtEur(spread)} (${fmt(spreadPct)} %)` : '–'}
                               </span>
                             </div>
-                            <div>
+                            <button
+                              onClick={() => setShowPerfInEur(!showPerfInEur)}
+                              className="text-left hover:opacity-70 transition-opacity"
+                            >
                               <span className="text-[var(--vintage-gray)]">Perf: </span>
                               <span
                                 className={
@@ -698,9 +741,13 @@ export default function Edelmetalle({ onLogout, showToast, onBack }) {
                                     : 'text-[var(--vintage-charcoal)]'
                                 }
                               >
-                                {perf != null ? `${perf >= 0 ? '+' : ''}${fmt(perf)} %` : '–'}
+                                {showPerfInEur
+                                  ? (currentVal != null
+                                      ? `${(currentVal - parseFloat(holding.purchase_price_eur)) >= 0 ? '+' : ''}${fmtEur(currentVal - parseFloat(holding.purchase_price_eur))}`
+                                      : '–')
+                                  : (perf != null ? `${perf >= 0 ? '+' : ''}${fmt(perf)} %` : '–')}
                               </span>
-                            </div>
+                            </button>
                           </div>
                           {holding.notes && (
                             <div className="text-xs text-[var(--vintage-gray)] mt-1 italic">{holding.notes}</div>

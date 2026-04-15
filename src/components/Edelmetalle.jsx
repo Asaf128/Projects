@@ -138,8 +138,6 @@ export default function Edelmetalle({ onLogout, showToast, onBack }) {
   useEffect(() => {
     fetchPrices()
     loadHoldings()
-    const interval = setInterval(fetchPrices, 60000)
-    return () => clearInterval(interval)
   }, [fetchPrices, loadHoldings])
 
   // Auto-fetch historical spot price when date or metal changes in the form

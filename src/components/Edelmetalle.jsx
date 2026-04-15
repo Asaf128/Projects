@@ -824,8 +824,9 @@ export default function Edelmetalle({ onLogout, showToast, onBack }) {
 
       {/* ── Add/Edit Modal ── */}
       {showAddForm && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white border border-[var(--vintage-border)] rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/50 z-50 overflow-y-auto">
+          <div className="flex min-h-full items-end sm:items-center justify-center p-4">
+          <div className="bg-white border border-[var(--vintage-border)] rounded-lg p-6 w-full max-w-md">
             <h3 className="text-base text-[var(--vintage-charcoal)] mb-5" style={{ fontFamily: 'Georgia, serif' }}>
               {editingHolding ? 'Kauf bearbeiten' : 'Kauf hinzufügen'}
             </h3>
@@ -868,7 +869,6 @@ export default function Edelmetalle({ onLogout, showToast, onBack }) {
                 <input
                   value={newHolding.name}
                   onChange={e => setNewHolding({ ...newHolding, name: e.target.value })}
-                  placeholder="z.B. July 4 Amerika Silber Münze 1 Unze"
                   className="w-full px-3 py-2 bg-[var(--vintage-beige)] border border-[var(--vintage-border)] rounded text-sm"
                 />
               </div>
@@ -884,7 +884,6 @@ export default function Edelmetalle({ onLogout, showToast, onBack }) {
                     min="0"
                     value={newHolding.weight_display}
                     onChange={e => setNewHolding({ ...newHolding, weight_display: e.target.value })}
-                    placeholder="z.B. 31.1035"
                     className="flex-1 px-3 py-2 bg-[var(--vintage-beige)] border border-[var(--vintage-border)] rounded text-sm"
                   />
                   <div className="flex border border-[var(--vintage-border)] rounded overflow-hidden">
@@ -921,7 +920,6 @@ export default function Edelmetalle({ onLogout, showToast, onBack }) {
                   min="0"
                   value={newHolding.purchase_price_eur}
                   onChange={e => setNewHolding({ ...newHolding, purchase_price_eur: e.target.value })}
-                  placeholder="89.30"
                   className="w-full px-3 py-2 bg-[var(--vintage-beige)] border border-[var(--vintage-border)] rounded text-sm"
                 />
               </div>
@@ -958,7 +956,6 @@ export default function Edelmetalle({ onLogout, showToast, onBack }) {
                   min="0"
                   value={newHolding.spot_price_per_gram_eur}
                   onChange={e => setNewHolding({ ...newHolding, spot_price_per_gram_eur: e.target.value })}
-                  placeholder={spotLoading ? 'Wird geladen…' : 'Manuell überschreiben möglich'}
                   disabled={spotLoading}
                   className="w-full px-3 py-2 bg-[var(--vintage-beige)] border border-[var(--vintage-border)] rounded text-sm disabled:opacity-50"
                 />
@@ -985,7 +982,6 @@ export default function Edelmetalle({ onLogout, showToast, onBack }) {
                   value={newHolding.notes}
                   onChange={e => setNewHolding({ ...newHolding, notes: e.target.value })}
                   rows={2}
-                  placeholder="Optional"
                   className="w-full px-3 py-2 bg-[var(--vintage-beige)] border border-[var(--vintage-border)] rounded text-sm resize-none"
                 />
               </div>
@@ -1007,6 +1003,7 @@ export default function Edelmetalle({ onLogout, showToast, onBack }) {
                 {editingHolding ? 'Speichern' : 'Hinzufügen'}
               </button>
             </div>
+          </div>
           </div>
         </div>
       )}

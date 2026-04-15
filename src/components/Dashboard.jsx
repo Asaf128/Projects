@@ -704,7 +704,8 @@ function Dashboard({ onLogout, showToast, projectName, onBack }) {
 
             {/* Add/Edit Part Modal */}
             {(showAddPart || editingPart) && (
-              <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+              <div className="fixed inset-0 bg-black/50 z-50 overflow-y-auto">
+                <div className="flex min-h-full items-end sm:items-center justify-center p-4">
                 <div className="bg-white border border-[var(--vintage-border)] rounded-lg p-6 w-full max-w-md">
                   <h3 className="text-lg text-[var(--vintage-charcoal)] mb-6" style={{ fontFamily: 'Georgia, serif' }}>
                     {editingPart ? 'Teil bearbeiten' : 'Neues Teil'}
@@ -806,6 +807,7 @@ function Dashboard({ onLogout, showToast, projectName, onBack }) {
                     </div>
                   </form>
                 </div>
+                </div>
               </div>
             )}
 
@@ -905,8 +907,9 @@ function Dashboard({ onLogout, showToast, projectName, onBack }) {
 
             {/* Add/Edit PC Modal */}
             {(showAddPC || editingPC) && (
-              <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                <div className="bg-white border border-[var(--vintage-border)] rounded-lg p-6 w-full max-w-lg max-h-[80vh] overflow-y-auto">
+              <div className="fixed inset-0 bg-black/50 z-50 overflow-y-auto">
+                <div className="flex min-h-full items-end sm:items-center justify-center p-4">
+                <div className="bg-white border border-[var(--vintage-border)] rounded-lg p-6 w-full max-w-lg">
                   <h3 className="text-lg text-[var(--vintage-charcoal)] mb-6" style={{ fontFamily: 'Georgia, serif' }}>
                     {editingPC ? 'PC bearbeiten' : 'Neuen PC zusammenstellen'}
                   </h3>
@@ -979,6 +982,7 @@ function Dashboard({ onLogout, showToast, projectName, onBack }) {
                       </button>
                     </div>
                   </form>
+                </div>
                 </div>
               </div>
             )}

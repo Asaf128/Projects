@@ -557,8 +557,9 @@ function VintedKlamotten({ onLogout, showToast, projectName, onBack }) {
 
             {/* Add/Edit Form Modal */}
             {(showAddForm || editingItem) && (
-              <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                <div className="bg-white border border-[var(--vintage-border)] rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+              <div className="fixed inset-0 bg-black/50 z-50 overflow-y-auto">
+                <div className="flex min-h-full items-end sm:items-center justify-center p-4">
+                <div className="bg-white border border-[var(--vintage-border)] rounded-lg p-6 w-full max-w-md">
                   <h3 className="text-lg text-[var(--vintage-charcoal)] mb-6" style={{ fontFamily: 'Georgia, serif' }}>
                     {editingItem ? 'Kleidungsstück bearbeiten' : 'Neues Kleidungsstück'}
                   </h3>
@@ -667,6 +668,7 @@ function VintedKlamotten({ onLogout, showToast, projectName, onBack }) {
                       </button>
                     </div>
                   </form>
+                </div>
                 </div>
               </div>
             )}

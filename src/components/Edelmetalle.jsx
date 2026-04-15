@@ -58,28 +58,21 @@ export default function Edelmetalle({ onLogout, showToast, onBack }) {
   const fetchPrices = useCallback(async () => {
     setPricesLoading(true)
     try {
-      const [metalsRes, fxRes] = await Promise.all([
-        fetch('https://api.metals.live/v1/spot'),
-        fetch('https://api.frankfurter.app/latest?from=USD&to=EUR')
-      ])
-      const metalsData = await metalsRes.json()
-      const fxData = await fxRes.json()
-
-      const usdToEur = fxData.rates.EUR
+      // Single call: open.er-api.com — free, no API key, CORS enabled
+      // Rates are "how many oz per 1 USD", so invert to get USD per oz
+      const res = await fetch('https://open.er-api.com/v6/latest/USD')
+      const data = await res.json()
+      const rates = data.rates
+      const usdToEur = rates.EUR
       setEurUsdRate(usdToEur)
 
-      const priceObj = Array.isArray(metalsData)
-        ? metalsData.reduce((acc, item) => ({ ...acc, ...item }), {})
-        : metalsData
-
-      const apiKeyMap = { gold: 'gold', silver: 'silver', platinum: 'platinum', palladium: 'palladium' }
+      const metalRateKeys = { gold: 'XAU', silver: 'XAG', platinum: 'XPT', palladium: 'XPD' }
       const prices = {}
-      for (const [metalId, apiKey] of Object.entries(apiKeyMap)) {
-        if (priceObj[apiKey]) {
-          const usdPerOz = priceObj[apiKey]
+      for (const [metalId, rateKey] of Object.entries(metalRateKeys)) {
+        if (rates[rateKey]) {
+          const usdPerOz = 1 / rates[rateKey]
           const eurPerOz = usdPerOz * usdToEur
-          const eurPerGram = eurPerOz / TROY_OZ_TO_GRAMS
-          prices[metalId] = { eurPerOz, eurPerGram, usdPerOz }
+          prices[metalId] = { eurPerOz, eurPerGram: eurPerOz / TROY_OZ_TO_GRAMS, usdPerOz }
         }
       }
       setSpotPrices(prices)
@@ -407,7 +400,7 @@ export default function Edelmetalle({ onLogout, showToast, onBack }) {
 
                 {eurUsdRate && (
                   <div className="text-xs text-[var(--vintage-gray)]">
-                    USD/EUR: {fmt(eurUsdRate, 4)} · Quellen: metals.live, frankfurter.app · Automatische Aktualisierung alle 60 s
+                    USD/EUR: {fmt(eurUsdRate, 4)} · Quelle: open.er-api.com · Automatische Aktualisierung alle 60 s
                   </div>
                 )}
 

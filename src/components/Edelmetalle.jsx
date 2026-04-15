@@ -58,24 +58,33 @@ export default function Edelmetalle({ onLogout, showToast, onBack }) {
   const fetchPrices = useCallback(async () => {
     setPricesLoading(true)
     try {
-      // Single call: open.er-api.com — free, no API key, CORS enabled
-      // Rates are "how many oz per 1 USD", so invert to get USD per oz
-      const res = await fetch('https://open.er-api.com/v6/latest/USD')
-      const data = await res.json()
-      const rates = data.rates
-      const usdToEur = rates.EUR
-      setEurUsdRate(usdToEur)
+      // fawazahmed0/currency-api via jsDelivr CDN — free, no API key, CORS enabled
+      // Returns EUR per troy oz directly (ECB data, updated daily)
+      const base = 'https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies'
+      const [xau, xag, xpt, xpd] = await Promise.allSettled([
+        fetch(`${base}/xau.min.json`).then(r => r.json()),
+        fetch(`${base}/xag.min.json`).then(r => r.json()),
+        fetch(`${base}/xpt.min.json`).then(r => r.json()),
+        fetch(`${base}/xpd.min.json`).then(r => r.json()),
+      ])
 
-      const metalRateKeys = { gold: 'XAU', silver: 'XAG', platinum: 'XPT', palladium: 'XPD' }
       const prices = {}
-      for (const [metalId, rateKey] of Object.entries(metalRateKeys)) {
-        if (rates[rateKey]) {
-          const usdPerOz = 1 / rates[rateKey]
-          const eurPerOz = usdPerOz * usdToEur
-          prices[metalId] = { eurPerOz, eurPerGram: eurPerOz / TROY_OZ_TO_GRAMS, usdPerOz }
+      const extract = (result, key) => {
+        if (result.status === 'fulfilled' && result.value?.[key]?.eur) {
+          const eurPerOz = result.value[key].eur
+          return { eurPerOz, eurPerGram: eurPerOz / TROY_OZ_TO_GRAMS }
         }
+        return null
       }
+      const p = {
+        gold: extract(xau, 'xau'),
+        silver: extract(xag, 'xag'),
+        platinum: extract(xpt, 'xpt'),
+        palladium: extract(xpd, 'xpd'),
+      }
+      for (const [k, v] of Object.entries(p)) { if (v) prices[k] = v }
       setSpotPrices(prices)
+      setEurUsdRate(null) // not needed with this API
     } catch (error) {
       console.error('Error fetching prices:', error)
       showToast('Fehler beim Laden der Preise', 'error')
@@ -398,11 +407,9 @@ export default function Edelmetalle({ onLogout, showToast, onBack }) {
                   })}
                 </div>
 
-                {eurUsdRate && (
-                  <div className="text-xs text-[var(--vintage-gray)]">
-                    USD/EUR: {fmt(eurUsdRate, 4)} · Quelle: open.er-api.com · Automatische Aktualisierung alle 60 s
-                  </div>
-                )}
+                <div className="text-xs text-[var(--vintage-gray)]">
+                  Quelle: ECB via currency-api · Tageskurs · Automatische Aktualisierung alle 60 s
+                </div>
 
                 {/* Weight Calculator */}
                 <div className="bg-white border border-[var(--vintage-border)] rounded-lg p-6">

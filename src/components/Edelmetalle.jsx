@@ -58,33 +58,30 @@ export default function Edelmetalle({ onLogout, showToast, onBack }) {
   const fetchPrices = useCallback(async () => {
     setPricesLoading(true)
     try {
-      // fawazahmed0/currency-api via jsDelivr CDN — free, no API key, CORS enabled
-      // Returns EUR per troy oz directly (ECB data, updated daily)
-      const base = 'https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies'
-      const [xau, xag, xpt, xpd] = await Promise.allSettled([
-        fetch(`${base}/xau.min.json`).then(r => r.json()),
-        fetch(`${base}/xag.min.json`).then(r => r.json()),
-        fetch(`${base}/xpt.min.json`).then(r => r.json()),
-        fetch(`${base}/xpd.min.json`).then(r => r.json()),
+      // gold-api.com: free, unlimited, no API key, CORS enabled — prices in USD
+      // open.er-api.com: EUR/USD rate (confirmed working)
+      const [fxRes, xau, xag, xpt, xpd] = await Promise.allSettled([
+        fetch('https://open.er-api.com/v6/latest/USD').then(r => r.json()),
+        fetch('https://api.gold-api.com/price/XAU').then(r => r.json()),
+        fetch('https://api.gold-api.com/price/XAG').then(r => r.json()),
+        fetch('https://api.gold-api.com/price/XPT').then(r => r.json()),
+        fetch('https://api.gold-api.com/price/XPD').then(r => r.json()),
       ])
 
+      const usdToEur = fxRes.status === 'fulfilled' ? fxRes.value?.rates?.EUR : null
+      if (!usdToEur) throw new Error('EUR/USD rate unavailable')
+      setEurUsdRate(usdToEur)
+
       const prices = {}
-      const extract = (result, key) => {
-        if (result.status === 'fulfilled' && result.value?.[key]?.eur) {
-          const eurPerOz = result.value[key].eur
-          return { eurPerOz, eurPerGram: eurPerOz / TROY_OZ_TO_GRAMS }
+      const metalResults = { gold: xau, silver: xag, platinum: xpt, palladium: xpd }
+      for (const [metalId, result] of Object.entries(metalResults)) {
+        if (result.status === 'fulfilled' && result.value?.price) {
+          const usdPerOz = result.value.price
+          const eurPerOz = usdPerOz * usdToEur
+          prices[metalId] = { eurPerOz, eurPerGram: eurPerOz / TROY_OZ_TO_GRAMS, usdPerOz }
         }
-        return null
       }
-      const p = {
-        gold: extract(xau, 'xau'),
-        silver: extract(xag, 'xag'),
-        platinum: extract(xpt, 'xpt'),
-        palladium: extract(xpd, 'xpd'),
-      }
-      for (const [k, v] of Object.entries(p)) { if (v) prices[k] = v }
       setSpotPrices(prices)
-      setEurUsdRate(null) // not needed with this API
     } catch (error) {
       console.error('Error fetching prices:', error)
       showToast('Fehler beim Laden der Preise', 'error')
@@ -407,9 +404,6 @@ export default function Edelmetalle({ onLogout, showToast, onBack }) {
                   })}
                 </div>
 
-                <div className="text-xs text-[var(--vintage-gray)]">
-                  Quelle: ECB via currency-api · Tageskurs · Automatische Aktualisierung alle 60 s
-                </div>
 
                 {/* Weight Calculator */}
                 <div className="bg-white border border-[var(--vintage-border)] rounded-lg p-6">

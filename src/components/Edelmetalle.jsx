@@ -469,7 +469,7 @@ export default function Edelmetalle({ onLogout, showToast, onBack }) {
           <div className="text-[var(--vintage-brown)]">Wert: {fmtEur(portfolioVal)}</div>
         )}
         {investedVal != null && (
-          <div className="text-[var(--vintage-gray)]">Investiert: {fmtEur(investedVal)}</div>
+          <div className="text-[var(--vintage-gray)]">Kaufpreis: {fmtEur(investedVal)}</div>
         )}
         {delta != null && (
           <div className={`mt-1 font-medium ${delta >= 0 ? 'text-[var(--vintage-olive)]' : 'text-red-500'}`}>
@@ -901,16 +901,17 @@ export default function Edelmetalle({ onLogout, showToast, onBack }) {
                             interval="preserveStartEnd"
                           />
                           <YAxis
-                            tickFormatter={v => `${fmt(v / 1000, 1)}k €`}
+                            tickFormatter={v => v >= 1000 ? `${fmt(v / 1000, 1)}k €` : `${Math.round(v)} €`}
                             tick={{ fontFamily: 'Georgia, serif', fontSize: 11, fill: 'var(--vintage-gray)' }}
                             tickLine={false}
                             axisLine={false}
-                            width={60}
+                            width={70}
+                            tickCount={6}
                           />
                           <Tooltip content={<CustomChartTooltip />} />
                           <Legend wrapperStyle={{ fontFamily: 'Georgia, serif', fontSize: '12px', paddingTop: '12px' }} />
-                          <Line type="monotone" dataKey="portfolioValue" name="Portfoliowert" stroke="var(--vintage-brown)" strokeWidth={2} dot={false} activeDot={{ r: 4, fill: 'var(--vintage-brown)' }} connectNulls={false} />
-                          <Line type="monotone" dataKey="invested" name="Investiert" stroke="var(--vintage-gray)" strokeWidth={1.5} strokeDasharray="4 3" dot={false} activeDot={{ r: 3 }} connectNulls={false} />
+                          <Line type="monotone" dataKey="portfolioValue" name="Marktwert" stroke="var(--vintage-brown)" strokeWidth={2} dot={false} activeDot={{ r: 4, fill: 'var(--vintage-brown)' }} connectNulls={false} />
+                          <Line type="monotone" dataKey="invested" name="Kaufpreis (gesamt)" stroke="var(--vintage-gray)" strokeWidth={1.5} strokeDasharray="4 3" dot={false} activeDot={{ r: 3 }} connectNulls={false} />
                         </LineChart>
                       </ResponsiveContainer>
                     </div>

@@ -175,6 +175,7 @@ export default function Edelmetalle({ onLogout, showToast, onBack }) {
     setHistoryError(null)
     try {
       const today = new Date()
+      const todayStr = today.toISOString().slice(0, 10)
       const fromDate = new Date(today)
       if (range === '3M') fromDate.setMonth(fromDate.getMonth() - 3)
       else if (range === '6M') fromDate.setMonth(fromDate.getMonth() - 6)
@@ -184,24 +185,30 @@ export default function Edelmetalle({ onLogout, showToast, onBack }) {
         if (earliest) fromDate.setTime(new Date(earliest).getTime())
         else fromDate.setFullYear(fromDate.getFullYear() - 1)
       }
+      const fromDateStr = fromDate.toISOString().slice(0, 10)
 
-      // Generate monthly sample dates (same endpoint that already works for single dates)
+      // Collect all dates to sample: regular intervals + purchase dates + today
       const stepDays = range === '3M' ? 14 : range === '6M' ? 21 : 30
-      const dates = []
+      const dateSet = new Set()
       const cur = new Date(fromDate)
-      while (cur <= today) {
-        dates.push(cur.toISOString().slice(0, 10))
+      while (cur.toISOString().slice(0, 10) <= todayStr) {
+        dateSet.add(cur.toISOString().slice(0, 10))
         cur.setDate(cur.getDate() + stepDays)
       }
-      const todayStr = today.toISOString().slice(0, 10)
-      if (dates[dates.length - 1] !== todayStr) dates.push(todayStr)
+      dateSet.add(todayStr)
+      holdings
+        .map(h => h.purchase_date.slice(0, 10))
+        .filter(d => d >= fromDateStr && d <= todayStr)
+        .forEach(d => dateSet.add(d))
+      const allDates = [...dateSet].sort()
 
-      // Use the single-date endpoint that already works in this app (no redirect/CORS issues)
-      const metalKeyToId = { XAU: 'gold', XAG: 'silver', XPT: 'platinum', XPD: 'palladium' }
-      const results = await Promise.all(
-        dates.map(async (date) => {
+      // Fetch API rates in parallel for each date
+      const metalToKey = { gold: 'XAU', silver: 'XAG', platinum: 'XPT', palladium: 'XPD' }
+      const apiResults = await Promise.all(
+        allDates.map(async (date) => {
           try {
             const res = await fetch(`https://api.frankfurter.dev/v2/rates?date=${date}&base=EUR`)
+            if (!res.ok) return { date, rates: null }
             const data = await res.json()
             return { date, rates: data?.rates || null }
           } catch {
@@ -209,43 +216,63 @@ export default function Edelmetalle({ onLogout, showToast, onBack }) {
           }
         })
       )
+      const ratesByDate = Object.fromEntries(
+        apiResults.filter(r => r.rates).map(r => [r.date, r.rates])
+      )
 
-      const points = results
-        .filter(r => r.rates !== null)
-        .map(({ date, rates }) => {
-          const spotOnDate = {}
-          for (const [key, ozPerEur] of Object.entries(rates)) {
-            const metalId = metalKeyToId[key]
-            if (metalId) spotOnDate[metalId] = (1 / ozPerEur) / TROY_OZ_TO_GRAMS
-          }
-          const activeHoldings = holdings.filter(h => h.purchase_date.slice(0, 10) <= date)
-          if (activeHoldings.length === 0) return null
-          let portfolioValue = 0
-          let allPricesAvailable = true
+      // Build data points — guarantee at least a spot-price fallback for every date
+      const points = allDates.flatMap((date) => {
+        const activeHoldings = holdings.filter(h => h.purchase_date.slice(0, 10) <= date)
+        if (activeHoldings.length === 0) return []
+
+        const invested = Math.round(
+          activeHoldings.reduce((s, h) => s + parseFloat(h.purchase_price_eur), 0) * 100
+        ) / 100
+
+        let portfolioValue = null
+        const rates = ratesByDate[date]
+
+        if (rates) {
+          // Use API-fetched historical rates
+          let val = 0, ok = true
           for (const h of activeHoldings) {
-            const spot = spotOnDate[h.metal_type]
-            if (spot == null) { allPricesAvailable = false; break }
-            portfolioValue += parseFloat(h.weight_grams) * spot
+            const ozPerEur = rates[metalToKey[h.metal_type]]
+            if (!ozPerEur) { ok = false; break }
+            val += parseFloat(h.weight_grams) * (1 / ozPerEur) / TROY_OZ_TO_GRAMS
           }
-          const invested = activeHoldings.reduce((s, h) => s + parseFloat(h.purchase_price_eur), 0)
-          return {
-            date,
-            portfolioValue: allPricesAvailable ? Math.round(portfolioValue * 100) / 100 : null,
-            invested: Math.round(invested * 100) / 100
+          if (ok) portfolioValue = Math.round(val * 100) / 100
+        } else if (date === todayStr && Object.keys(spotPrices).length > 0) {
+          // Fallback for today: use already-loaded spot prices
+          let val = 0, ok = true
+          for (const h of activeHoldings) {
+            const spot = spotPrices[h.metal_type]?.eurPerGram
+            if (!spot) { ok = false; break }
+            val += parseFloat(h.weight_grams) * spot
           }
-        })
-        .filter(Boolean)
+          if (ok) portfolioValue = Math.round(val * 100) / 100
+        } else {
+          // Fallback for past dates: use stored spot_price_per_gram_eur
+          let val = 0
+          for (const h of activeHoldings) {
+            if (h.spot_price_per_gram_eur) {
+              val += parseFloat(h.weight_grams) * parseFloat(h.spot_price_per_gram_eur)
+            }
+          }
+          if (val > 0) portfolioValue = Math.round(val * 100) / 100
+        }
+
+        return [{ date, portfolioValue, invested }]
+      })
 
       setHistoryData(points)
     } catch (err) {
       console.error('Error fetching portfolio history:', err)
-      setHistoryError('Historische Daten konnten nicht geladen werden.')
-      showToast('Fehler beim Laden des Verlaufs', 'error')
+      setHistoryError('Verlauf konnte nicht geladen werden.')
     } finally {
-      setHistoryFetched(true) // always set — prevents infinite retry loop
+      setHistoryFetched(true)
       setHistoryLoading(false)
     }
-  }, [holdings, showToast])
+  }, [holdings, spotPrices, showToast])
 
   const handleRangeChange = (range) => {
     setHistoryRange(range)
@@ -851,6 +878,12 @@ export default function Edelmetalle({ onLogout, showToast, onBack }) {
                       >
                         Erneut versuchen
                       </button>
+                    </div>
+                  )}
+
+                  {historyFetched && !historyLoading && !historyError && historyData.length === 0 && (
+                    <div className="bg-white border border-[var(--vintage-border)] rounded-lg p-6 text-center">
+                      <p className="text-sm text-[var(--vintage-gray)]">Keine Verlaufsdaten verfügbar.</p>
                     </div>
                   )}
 

@@ -890,7 +890,7 @@ export default function Edelmetalle({ onLogout, showToast, onBack }) {
                   {!historyLoading && !historyError && historyData.length > 0 && (
                     <div className="bg-white border border-[var(--vintage-border)] rounded-lg p-5">
                       <ResponsiveContainer width="100%" height={280}>
-                        <LineChart data={historyData} margin={{ top: 8, right: 16, bottom: 8, left: 16 }}>
+                        <LineChart data={historyData} margin={{ top: 8, right: 8, bottom: 8, left: 0 }} style={{ outline: 'none' }}>
                           <CartesianGrid strokeDasharray="3 3" stroke="var(--vintage-border)" vertical={false} />
                           <XAxis
                             dataKey="date"

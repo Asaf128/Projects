@@ -190,7 +190,7 @@ export default function Edelmetalle({ onLogout, showToast, onBack }) {
       })()
 
       const res = await fetch(
-        `https://api.frankfurter.dev/v2/rates?date_from=${fromDate}&date_to=${toDate}&base=EUR`
+        `https://api.frankfurter.app/${fromDate}..${toDate}?base=EUR`
       )
       const data = await res.json()
       if (!data?.rates) throw new Error('No rates data')
@@ -253,9 +253,9 @@ export default function Edelmetalle({ onLogout, showToast, onBack }) {
     fetchHistoricalSpot(newHolding.purchase_date, newHolding.metal_type)
   }, [showAddForm, newHolding.purchase_date, newHolding.metal_type, fetchHistoricalSpot])
 
-  // Lazy-fetch portfolio history when Verlauf tab is opened or range changes
+  // Lazy-fetch portfolio history when portfolio tab is visible and holdings are loaded
   useEffect(() => {
-    if (activeTab === 'verlauf' && !historyFetched && !holdingsLoading && holdings.length > 0) {
+    if (activeTab === 'portfolio' && !historyFetched && !holdingsLoading && holdings.length > 0) {
       fetchPortfolioHistory(historyRange)
     }
   }, [activeTab, historyFetched, holdings, holdingsLoading, historyRange, fetchPortfolioHistory])
@@ -454,10 +454,6 @@ export default function Edelmetalle({ onLogout, showToast, onBack }) {
     {
       id: 'kaeufe', label: 'Käufe',
       icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
-    },
-    {
-      id: 'verlauf', label: 'Verlauf',
-      icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 12l3-3 3 3 4-4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" /></svg>
     },
   ]
 
@@ -807,6 +803,75 @@ export default function Edelmetalle({ onLogout, showToast, onBack }) {
                     </div>
                   ))}
                 </div>
+
+                {/* ── Verlauf Chart ── */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between flex-wrap gap-3">
+                    <h3 className="text-sm text-[var(--vintage-charcoal)]" style={{ fontFamily: 'Georgia, serif' }}>Verlauf</h3>
+                    <div className="flex border border-[var(--vintage-border)] rounded overflow-hidden">
+                      {['3M', '6M', '1Y', 'Max'].map(r => (
+                        <button
+                          key={r}
+                          onClick={() => handleRangeChange(r)}
+                          className={`px-3 py-1.5 text-xs transition-colors ${
+                            historyRange === r
+                              ? 'bg-[var(--vintage-brown)] text-white'
+                              : 'bg-[var(--vintage-beige)] text-[var(--vintage-brown)] hover:bg-[var(--vintage-brown)]/10'
+                          }`}
+                        >
+                          {r}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {historyLoading && (
+                    <div className="bg-white border border-[var(--vintage-border)] rounded-lg p-6 text-center">
+                      <p className="text-sm text-[var(--vintage-gray)]">Verlauf wird geladen…</p>
+                    </div>
+                  )}
+
+                  {historyError && !historyLoading && (
+                    <div className="bg-white border border-[var(--vintage-border)] rounded-lg p-4 text-center">
+                      <p className="text-sm text-red-500 mb-2">{historyError}</p>
+                      <button
+                        onClick={() => { setHistoryFetched(false); setHistoryData([]) }}
+                        className="text-xs text-[var(--vintage-brown)] hover:underline"
+                      >
+                        Erneut versuchen
+                      </button>
+                    </div>
+                  )}
+
+                  {!historyLoading && !historyError && historyData.length > 0 && (
+                    <div className="bg-white border border-[var(--vintage-border)] rounded-lg p-5">
+                      <ResponsiveContainer width="100%" height={280}>
+                        <LineChart data={historyData} margin={{ top: 8, right: 16, bottom: 8, left: 16 }}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="var(--vintage-border)" vertical={false} />
+                          <XAxis
+                            dataKey="date"
+                            tickFormatter={formatChartDate}
+                            tick={{ fontFamily: 'Georgia, serif', fontSize: 11, fill: 'var(--vintage-gray)' }}
+                            tickLine={false}
+                            axisLine={{ stroke: 'var(--vintage-border)' }}
+                            interval="preserveStartEnd"
+                          />
+                          <YAxis
+                            tickFormatter={v => `${fmt(v / 1000, 1)}k €`}
+                            tick={{ fontFamily: 'Georgia, serif', fontSize: 11, fill: 'var(--vintage-gray)' }}
+                            tickLine={false}
+                            axisLine={false}
+                            width={60}
+                          />
+                          <Tooltip content={<CustomChartTooltip />} />
+                          <Legend wrapperStyle={{ fontFamily: 'Georgia, serif', fontSize: '12px', paddingTop: '12px' }} />
+                          <Line type="monotone" dataKey="portfolioValue" name="Portfoliowert" stroke="var(--vintage-brown)" strokeWidth={2} dot={false} activeDot={{ r: 4, fill: 'var(--vintage-brown)' }} connectNulls={false} />
+                          <Line type="monotone" dataKey="invested" name="Investiert" stroke="var(--vintage-gray)" strokeWidth={1.5} strokeDasharray="4 3" dot={false} activeDot={{ r: 3 }} connectNulls={false} />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+                  )}
+                </div>
               </>
             )}
           </div>
@@ -940,108 +1005,6 @@ export default function Edelmetalle({ onLogout, showToast, onBack }) {
                     </div>
                   )
                 })}
-              </div>
-            )}
-          </div>
-        )}
-        {/* ── TAB: VERLAUF ── */}
-        {activeTab === 'verlauf' && (
-          <div className="space-y-6">
-            <div className="flex items-center justify-between flex-wrap gap-3">
-              <h2 className="text-lg text-[var(--vintage-charcoal)]" style={{ fontFamily: 'Georgia, serif' }}>
-                Verlauf
-              </h2>
-              <div className="flex border border-[var(--vintage-border)] rounded overflow-hidden">
-                {['3M', '6M', '1Y', 'Max'].map(r => (
-                  <button
-                    key={r}
-                    onClick={() => handleRangeChange(r)}
-                    className={`px-3 py-1.5 text-xs transition-colors ${
-                      historyRange === r
-                        ? 'bg-[var(--vintage-brown)] text-white'
-                        : 'bg-[var(--vintage-beige)] text-[var(--vintage-brown)] hover:bg-[var(--vintage-brown)]/10'
-                    }`}
-                  >
-                    {r}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {holdings.length === 0 && !holdingsLoading && (
-              <div className="bg-white border border-[var(--vintage-border)] rounded-lg p-8 text-center">
-                <p className="text-[var(--vintage-gray)] text-sm mb-3">Noch keine Käufe erfasst.</p>
-                <button onClick={() => setActiveTab('kaeufe')} className="text-sm text-[var(--vintage-brown)] hover:underline">
-                  Ersten Kauf hinzufügen →
-                </button>
-              </div>
-            )}
-
-            {historyLoading && (
-              <div className="bg-white border border-[var(--vintage-border)] rounded-lg p-8 text-center">
-                <p className="text-sm text-[var(--vintage-gray)]">Verlauf wird geladen…</p>
-              </div>
-            )}
-
-            {historyError && !historyLoading && (
-              <div className="bg-white border border-[var(--vintage-border)] rounded-lg p-6 text-center">
-                <p className="text-sm text-red-500 mb-3">{historyError}</p>
-                <button
-                  onClick={() => { setHistoryFetched(false); setHistoryData([]) }}
-                  className="text-xs text-[var(--vintage-brown)] hover:underline"
-                >
-                  Erneut versuchen
-                </button>
-              </div>
-            )}
-
-            {!historyLoading && !historyError && historyData.length > 0 && (
-              <div className="bg-white border border-[var(--vintage-border)] rounded-lg p-5">
-                <ResponsiveContainer width="100%" height={320}>
-                  <LineChart data={historyData} margin={{ top: 8, right: 16, bottom: 8, left: 16 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="var(--vintage-border)" vertical={false} />
-                    <XAxis
-                      dataKey="date"
-                      tickFormatter={formatChartDate}
-                      tick={{ fontFamily: 'Georgia, serif', fontSize: 11, fill: 'var(--vintage-gray)' }}
-                      tickLine={false}
-                      axisLine={{ stroke: 'var(--vintage-border)' }}
-                      interval="preserveStartEnd"
-                    />
-                    <YAxis
-                      tickFormatter={v => `${fmt(v / 1000, 1)}k €`}
-                      tick={{ fontFamily: 'Georgia, serif', fontSize: 11, fill: 'var(--vintage-gray)' }}
-                      tickLine={false}
-                      axisLine={false}
-                      width={60}
-                    />
-                    <Tooltip content={<CustomChartTooltip />} />
-                    <Legend
-                      wrapperStyle={{ fontFamily: 'Georgia, serif', fontSize: '12px', paddingTop: '12px' }}
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="portfolioValue"
-                      name="Portfoliowert"
-                      stroke="var(--vintage-brown)"
-                      strokeWidth={2}
-                      dot={false}
-                      activeDot={{ r: 4, fill: 'var(--vintage-brown)' }}
-                      connectNulls={false}
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="invested"
-                      name="Investiert"
-                      stroke="var(--vintage-gray)"
-                      strokeWidth={1.5}
-                      strokeDasharray="4 3"
-                      dot={false}
-                      activeDot={{ r: 3 }}
-                      connectNulls={false}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
               </div>
             )}
           </div>

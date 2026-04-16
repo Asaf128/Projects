@@ -1,5 +1,9 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
+import {
+  LineChart, Line, XAxis, YAxis, CartesianGrid,
+  Tooltip, Legend, ResponsiveContainer
+} from 'recharts'
 
 const TROY_OZ_TO_GRAMS = 31.1035
 
@@ -35,6 +39,11 @@ export default function Edelmetalle({ onLogout, showToast, onBack }) {
   const [selectedMetal, setSelectedMetal] = useState('gold')
   const [showPerfInEur, setShowPerfInEur] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [historyData, setHistoryData] = useState([])
+  const [historyLoading, setHistoryLoading] = useState(false)
+  const [historyError, setHistoryError] = useState(null)
+  const [historyRange, setHistoryRange] = useState('1Y')
+  const [historyFetched, setHistoryFetched] = useState(false)
   const [newHolding, setNewHolding] = useState({
     metal_type: 'gold',
     product_type: 'coin',
@@ -160,6 +169,79 @@ export default function Edelmetalle({ onLogout, showToast, onBack }) {
     }
   }, [showToast])
 
+  const fetchPortfolioHistory = useCallback(async (range) => {
+    if (holdings.length === 0) return
+    setHistoryLoading(true)
+    setHistoryError(null)
+    try {
+      const today = new Date()
+      const toDate = today.toISOString().slice(0, 10)
+      const fromDate = (() => {
+        const d = new Date(today)
+        if (range === '3M') d.setMonth(d.getMonth() - 3)
+        else if (range === '6M') d.setMonth(d.getMonth() - 6)
+        else if (range === '1Y') d.setFullYear(d.getFullYear() - 1)
+        else {
+          const earliest = holdings.map(h => h.purchase_date.slice(0, 10)).sort()[0]
+          if (earliest) d.setTime(new Date(earliest).getTime())
+          else d.setFullYear(d.getFullYear() - 1)
+        }
+        return d.toISOString().slice(0, 10)
+      })()
+
+      const res = await fetch(
+        `https://api.frankfurter.dev/v2/rates?date_from=${fromDate}&date_to=${toDate}&base=EUR`
+      )
+      const data = await res.json()
+      if (!data?.rates) throw new Error('No rates data')
+
+      const metalKeyToId = { XAU: 'gold', XAG: 'silver', XPT: 'platinum', XPD: 'palladium' }
+      const sortedDates = Object.keys(data.rates).sort()
+
+      const points = sortedDates.map(dateStr => {
+        const rates = data.rates[dateStr]
+        const spotOnDate = {}
+        for (const [key, ozPerEur] of Object.entries(rates)) {
+          const metalId = metalKeyToId[key]
+          if (metalId) spotOnDate[metalId] = (1 / ozPerEur) / TROY_OZ_TO_GRAMS
+        }
+
+        const activeHoldings = holdings.filter(h => h.purchase_date.slice(0, 10) <= dateStr)
+        let portfolioValue = 0
+        let allPricesAvailable = true
+        for (const h of activeHoldings) {
+          const spot = spotOnDate[h.metal_type]
+          if (spot == null) { allPricesAvailable = false; break }
+          portfolioValue += parseFloat(h.weight_grams) * spot
+        }
+        const invested = activeHoldings.reduce((s, h) => s + parseFloat(h.purchase_price_eur), 0)
+
+        return {
+          date: dateStr,
+          portfolioValue: allPricesAvailable && activeHoldings.length > 0
+            ? Math.round(portfolioValue * 100) / 100
+            : null,
+          invested: activeHoldings.length > 0 ? Math.round(invested * 100) / 100 : null
+        }
+      }).filter(p => p.invested !== null)
+
+      setHistoryData(points)
+      setHistoryFetched(true)
+    } catch (err) {
+      console.error('Error fetching portfolio history:', err)
+      setHistoryError('Historische Daten konnten nicht geladen werden.')
+      showToast('Fehler beim Laden des Verlaufs', 'error')
+    } finally {
+      setHistoryLoading(false)
+    }
+  }, [holdings, showToast])
+
+  const handleRangeChange = (range) => {
+    setHistoryRange(range)
+    setHistoryFetched(false)
+    setHistoryData([])
+  }
+
   useEffect(() => {
     fetchPrices()
     loadHoldings()
@@ -170,6 +252,13 @@ export default function Edelmetalle({ onLogout, showToast, onBack }) {
     if (!showAddForm || !newHolding.purchase_date) return
     fetchHistoricalSpot(newHolding.purchase_date, newHolding.metal_type)
   }, [showAddForm, newHolding.purchase_date, newHolding.metal_type, fetchHistoricalSpot])
+
+  // Lazy-fetch portfolio history when Verlauf tab is opened or range changes
+  useEffect(() => {
+    if (activeTab === 'verlauf' && !historyFetched && !holdingsLoading && holdings.length > 0) {
+      fetchPortfolioHistory(historyRange)
+    }
+  }, [activeTab, historyFetched, holdings, holdingsLoading, historyRange, fetchPortfolioHistory])
 
   const openAddForm = () => {
     const now = new Date()
@@ -322,6 +411,37 @@ export default function Edelmetalle({ onLogout, showToast, onBack }) {
     (s, m) => s + (m.totalSpotAtPurchase || 0), 0
   )
 
+  const formatChartDate = (dateStr) => {
+    if (!dateStr) return ''
+    const d = new Date(dateStr + 'T00:00:00')
+    return d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' })
+  }
+
+  const CustomChartTooltip = ({ active, payload, label }) => {
+    if (!active || !payload || payload.length === 0) return null
+    const portfolioVal = payload.find(p => p.dataKey === 'portfolioValue')?.value
+    const investedVal = payload.find(p => p.dataKey === 'invested')?.value
+    const delta = portfolioVal != null && investedVal != null ? portfolioVal - investedVal : null
+    const d = new Date(label + 'T00:00:00')
+    const dateLabel = d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })
+    return (
+      <div className="bg-white border border-[var(--vintage-border)] rounded p-3 text-xs shadow-sm" style={{ fontFamily: 'Georgia, serif' }}>
+        <div className="text-[var(--vintage-gray)] mb-2">{dateLabel}</div>
+        {portfolioVal != null && (
+          <div className="text-[var(--vintage-brown)]">Wert: {fmtEur(portfolioVal)}</div>
+        )}
+        {investedVal != null && (
+          <div className="text-[var(--vintage-gray)]">Investiert: {fmtEur(investedVal)}</div>
+        )}
+        {delta != null && (
+          <div className={`mt-1 font-medium ${delta >= 0 ? 'text-[var(--vintage-olive)]' : 'text-red-500'}`}>
+            {delta >= 0 ? '+' : ''}{fmtEur(delta)}
+          </div>
+        )}
+      </div>
+    )
+  }
+
   const navItems = [
     {
       id: 'preise', label: 'Preise',
@@ -334,6 +454,10 @@ export default function Edelmetalle({ onLogout, showToast, onBack }) {
     {
       id: 'kaeufe', label: 'Käufe',
       icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
+    },
+    {
+      id: 'verlauf', label: 'Verlauf',
+      icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 12l3-3 3 3 4-4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" /></svg>
     },
   ]
 
@@ -816,6 +940,108 @@ export default function Edelmetalle({ onLogout, showToast, onBack }) {
                     </div>
                   )
                 })}
+              </div>
+            )}
+          </div>
+        )}
+        {/* ── TAB: VERLAUF ── */}
+        {activeTab === 'verlauf' && (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between flex-wrap gap-3">
+              <h2 className="text-lg text-[var(--vintage-charcoal)]" style={{ fontFamily: 'Georgia, serif' }}>
+                Verlauf
+              </h2>
+              <div className="flex border border-[var(--vintage-border)] rounded overflow-hidden">
+                {['3M', '6M', '1Y', 'Max'].map(r => (
+                  <button
+                    key={r}
+                    onClick={() => handleRangeChange(r)}
+                    className={`px-3 py-1.5 text-xs transition-colors ${
+                      historyRange === r
+                        ? 'bg-[var(--vintage-brown)] text-white'
+                        : 'bg-[var(--vintage-beige)] text-[var(--vintage-brown)] hover:bg-[var(--vintage-brown)]/10'
+                    }`}
+                  >
+                    {r}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {holdings.length === 0 && !holdingsLoading && (
+              <div className="bg-white border border-[var(--vintage-border)] rounded-lg p-8 text-center">
+                <p className="text-[var(--vintage-gray)] text-sm mb-3">Noch keine Käufe erfasst.</p>
+                <button onClick={() => setActiveTab('kaeufe')} className="text-sm text-[var(--vintage-brown)] hover:underline">
+                  Ersten Kauf hinzufügen →
+                </button>
+              </div>
+            )}
+
+            {historyLoading && (
+              <div className="bg-white border border-[var(--vintage-border)] rounded-lg p-8 text-center">
+                <p className="text-sm text-[var(--vintage-gray)]">Verlauf wird geladen…</p>
+              </div>
+            )}
+
+            {historyError && !historyLoading && (
+              <div className="bg-white border border-[var(--vintage-border)] rounded-lg p-6 text-center">
+                <p className="text-sm text-red-500 mb-3">{historyError}</p>
+                <button
+                  onClick={() => { setHistoryFetched(false); setHistoryData([]) }}
+                  className="text-xs text-[var(--vintage-brown)] hover:underline"
+                >
+                  Erneut versuchen
+                </button>
+              </div>
+            )}
+
+            {!historyLoading && !historyError && historyData.length > 0 && (
+              <div className="bg-white border border-[var(--vintage-border)] rounded-lg p-5">
+                <ResponsiveContainer width="100%" height={320}>
+                  <LineChart data={historyData} margin={{ top: 8, right: 16, bottom: 8, left: 16 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--vintage-border)" vertical={false} />
+                    <XAxis
+                      dataKey="date"
+                      tickFormatter={formatChartDate}
+                      tick={{ fontFamily: 'Georgia, serif', fontSize: 11, fill: 'var(--vintage-gray)' }}
+                      tickLine={false}
+                      axisLine={{ stroke: 'var(--vintage-border)' }}
+                      interval="preserveStartEnd"
+                    />
+                    <YAxis
+                      tickFormatter={v => `${fmt(v / 1000, 1)}k €`}
+                      tick={{ fontFamily: 'Georgia, serif', fontSize: 11, fill: 'var(--vintage-gray)' }}
+                      tickLine={false}
+                      axisLine={false}
+                      width={60}
+                    />
+                    <Tooltip content={<CustomChartTooltip />} />
+                    <Legend
+                      wrapperStyle={{ fontFamily: 'Georgia, serif', fontSize: '12px', paddingTop: '12px' }}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="portfolioValue"
+                      name="Portfoliowert"
+                      stroke="var(--vintage-brown)"
+                      strokeWidth={2}
+                      dot={false}
+                      activeDot={{ r: 4, fill: 'var(--vintage-brown)' }}
+                      connectNulls={false}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="invested"
+                      name="Investiert"
+                      stroke="var(--vintage-gray)"
+                      strokeWidth={1.5}
+                      strokeDasharray="4 3"
+                      dot={false}
+                      activeDot={{ r: 3 }}
+                      connectNulls={false}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
               </div>
             )}
           </div>

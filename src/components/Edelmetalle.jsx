@@ -888,9 +888,9 @@ export default function Edelmetalle({ onLogout, showToast, onBack }) {
                   )}
 
                   {!historyLoading && !historyError && historyData.length > 0 && (
-                    <div className="bg-white border border-[var(--vintage-border)] rounded-lg p-5">
+                    <div className="bg-white border border-[var(--vintage-border)] rounded-lg p-5 [&_svg]:outline-none [&_svg:focus]:outline-none [&_*:focus]:outline-none">
                       <ResponsiveContainer width="100%" height={280}>
-                        <LineChart data={historyData} margin={{ top: 8, right: 8, bottom: 8, left: 0 }} style={{ outline: 'none' }}>
+                        <LineChart data={historyData} margin={{ top: 8, right: 8, bottom: 8, left: -10 }}>
                           <CartesianGrid strokeDasharray="3 3" stroke="var(--vintage-border)" vertical={false} />
                           <XAxis
                             dataKey="date"
@@ -905,7 +905,7 @@ export default function Edelmetalle({ onLogout, showToast, onBack }) {
                             tick={{ fontFamily: 'Georgia, serif', fontSize: 11, fill: 'var(--vintage-gray)' }}
                             tickLine={false}
                             axisLine={false}
-                            width={70}
+                            width={55}
                             tickCount={6}
                           />
                           <Tooltip content={<CustomChartTooltip />} />

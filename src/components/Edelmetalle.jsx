@@ -175,63 +175,74 @@ export default function Edelmetalle({ onLogout, showToast, onBack }) {
     setHistoryError(null)
     try {
       const today = new Date()
-      const toDate = today.toISOString().slice(0, 10)
-      const fromDate = (() => {
-        const d = new Date(today)
-        if (range === '3M') d.setMonth(d.getMonth() - 3)
-        else if (range === '6M') d.setMonth(d.getMonth() - 6)
-        else if (range === '1Y') d.setFullYear(d.getFullYear() - 1)
-        else {
-          const earliest = holdings.map(h => h.purchase_date.slice(0, 10)).sort()[0]
-          if (earliest) d.setTime(new Date(earliest).getTime())
-          else d.setFullYear(d.getFullYear() - 1)
-        }
-        return d.toISOString().slice(0, 10)
-      })()
+      const fromDate = new Date(today)
+      if (range === '3M') fromDate.setMonth(fromDate.getMonth() - 3)
+      else if (range === '6M') fromDate.setMonth(fromDate.getMonth() - 6)
+      else if (range === '1Y') fromDate.setFullYear(fromDate.getFullYear() - 1)
+      else {
+        const earliest = holdings.map(h => h.purchase_date.slice(0, 10)).sort()[0]
+        if (earliest) fromDate.setTime(new Date(earliest).getTime())
+        else fromDate.setFullYear(fromDate.getFullYear() - 1)
+      }
 
-      const res = await fetch(
-        `https://api.frankfurter.app/${fromDate}..${toDate}?base=EUR`
-      )
-      const data = await res.json()
-      if (!data?.rates) throw new Error('No rates data')
+      // Generate monthly sample dates (same endpoint that already works for single dates)
+      const stepDays = range === '3M' ? 14 : range === '6M' ? 21 : 30
+      const dates = []
+      const cur = new Date(fromDate)
+      while (cur <= today) {
+        dates.push(cur.toISOString().slice(0, 10))
+        cur.setDate(cur.getDate() + stepDays)
+      }
+      const todayStr = today.toISOString().slice(0, 10)
+      if (dates[dates.length - 1] !== todayStr) dates.push(todayStr)
 
+      // Use the single-date endpoint that already works in this app (no redirect/CORS issues)
       const metalKeyToId = { XAU: 'gold', XAG: 'silver', XPT: 'platinum', XPD: 'palladium' }
-      const sortedDates = Object.keys(data.rates).sort()
+      const results = await Promise.all(
+        dates.map(async (date) => {
+          try {
+            const res = await fetch(`https://api.frankfurter.dev/v2/rates?date=${date}&base=EUR`)
+            const data = await res.json()
+            return { date, rates: data?.rates || null }
+          } catch {
+            return { date, rates: null }
+          }
+        })
+      )
 
-      const points = sortedDates.map(dateStr => {
-        const rates = data.rates[dateStr]
-        const spotOnDate = {}
-        for (const [key, ozPerEur] of Object.entries(rates)) {
-          const metalId = metalKeyToId[key]
-          if (metalId) spotOnDate[metalId] = (1 / ozPerEur) / TROY_OZ_TO_GRAMS
-        }
-
-        const activeHoldings = holdings.filter(h => h.purchase_date.slice(0, 10) <= dateStr)
-        let portfolioValue = 0
-        let allPricesAvailable = true
-        for (const h of activeHoldings) {
-          const spot = spotOnDate[h.metal_type]
-          if (spot == null) { allPricesAvailable = false; break }
-          portfolioValue += parseFloat(h.weight_grams) * spot
-        }
-        const invested = activeHoldings.reduce((s, h) => s + parseFloat(h.purchase_price_eur), 0)
-
-        return {
-          date: dateStr,
-          portfolioValue: allPricesAvailable && activeHoldings.length > 0
-            ? Math.round(portfolioValue * 100) / 100
-            : null,
-          invested: activeHoldings.length > 0 ? Math.round(invested * 100) / 100 : null
-        }
-      }).filter(p => p.invested !== null)
+      const points = results
+        .filter(r => r.rates !== null)
+        .map(({ date, rates }) => {
+          const spotOnDate = {}
+          for (const [key, ozPerEur] of Object.entries(rates)) {
+            const metalId = metalKeyToId[key]
+            if (metalId) spotOnDate[metalId] = (1 / ozPerEur) / TROY_OZ_TO_GRAMS
+          }
+          const activeHoldings = holdings.filter(h => h.purchase_date.slice(0, 10) <= date)
+          if (activeHoldings.length === 0) return null
+          let portfolioValue = 0
+          let allPricesAvailable = true
+          for (const h of activeHoldings) {
+            const spot = spotOnDate[h.metal_type]
+            if (spot == null) { allPricesAvailable = false; break }
+            portfolioValue += parseFloat(h.weight_grams) * spot
+          }
+          const invested = activeHoldings.reduce((s, h) => s + parseFloat(h.purchase_price_eur), 0)
+          return {
+            date,
+            portfolioValue: allPricesAvailable ? Math.round(portfolioValue * 100) / 100 : null,
+            invested: Math.round(invested * 100) / 100
+          }
+        })
+        .filter(Boolean)
 
       setHistoryData(points)
-      setHistoryFetched(true)
     } catch (err) {
       console.error('Error fetching portfolio history:', err)
       setHistoryError('Historische Daten konnten nicht geladen werden.')
       showToast('Fehler beim Laden des Verlaufs', 'error')
     } finally {
+      setHistoryFetched(true) // always set — prevents infinite retry loop
       setHistoryLoading(false)
     }
   }, [holdings, showToast])
